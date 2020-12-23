@@ -8,8 +8,8 @@ To bring changes from the original repository follow this steps:
 ```
 cd sbst-tool-competition-av
 git remote add public https://github.com/se2p/tool-competition-av.git
-git pull public master # Creates a merge commit
-git push origin master
+git pull public main # Creates a merge commit
+git push origin main
 ```
 
 
