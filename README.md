@@ -1,4 +1,8 @@
-# Cyber-Physical Systems Testing Competition #
+# Cyber-Physical Systems Testing Competition (ERATO-fork)#
+
+This is a fork of [sbst-tool-competition-av](https://github.com/se2p/tool-competition-av) to develop our algorithms.
+
+## Competition ##
 
 Starting this year, the [SBST Workshop](https://sbst21.github.io/) offers a challenge for software testers who want to work with self-driving cars in the context
 of the usual [tool competition](https://sbst21.github.io/tools/).
