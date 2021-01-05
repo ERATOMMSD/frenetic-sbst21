@@ -1,4 +1,4 @@
-# Cyber-Physical Systems Testing Competition (ERATO-fork)#
+# Cyber-Physical Systems Testing Competition (ERATO-fork)
 
 This is a fork of [sbst-tool-competition-av](https://github.com/se2p/tool-competition-av) to develop our algorithms.
 
