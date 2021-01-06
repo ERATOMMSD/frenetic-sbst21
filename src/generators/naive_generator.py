@@ -57,9 +57,7 @@ class NaiveGenerator():
             road_points.append((x, y))
         return road_points
 
-    def start(self):
-        log.info("Starting test generation")
-
+    def test_1(self):
         x = 100.0
         y = 10.0
         vertical_length = 100.0
@@ -69,7 +67,25 @@ class NaiveGenerator():
         road_points = self.vertical_segment(x, y, vertical_length)
         road_points += self.curve_left(road_points[-1][0], road_points[-1][1], radius=radius)
         road_points += self.horizontal_segment(road_points[-1][0], road_points[-1][1], horizontal_length, radius=radius, direction=-1.0)
+        return road_points
 
+    def test_2(self):
+        x = 100.0
+        y = 10.0
+        vertical_length = 100.0
+        horizontal_length = 30.0
+        radius = 20.0
+
+        road_points = self.vertical_segment(x, y, vertical_length)
+        road_points += self.curve_right(road_points[-1][0], road_points[-1][1], radius=radius)
+        road_points += self.horizontal_segment(road_points[-1][0], road_points[-1][1], horizontal_length, radius=radius, direction=1.0)
+        return road_points
+
+
+    def start(self):
+        log.info("Starting test generation")
+
+        road_points = self.test_1()
 
         # Creating the RoadTest from the points
         the_test = RoadTestFactory.create_road_test(road_points)
