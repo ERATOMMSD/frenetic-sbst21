@@ -5,13 +5,10 @@ import numpy as np
 import sys
 import tkinter as tk
 import tkinter.scrolledtext as scrolledtext
+import subprocess
 
 sys.path.append('../..')
 print(sys.path)
-
-# Run from root folder:
-# python src/utils/road_points_gui.py
-
 
 import code_pipeline.tests_generation as test
 import another_visualizer as vis
@@ -37,7 +34,6 @@ class RoadFigure:
         tx = txy[0]
         ty = txy[1]
         self.drag_index = self.get_nearest_index(tx, ty)
-
 
     def button_release_callback(self, event):
         print("button release : {:.2f} - {:.2f}".format(event.x, event.y))
@@ -80,8 +76,8 @@ class RoadFigure:
         self.figure = plt.figure()
         self.ax = plt.gca()
         self.ax.set_aspect('equal')
-        self.xs = np.linspace(0, self.map_size, num=self.nof_points)
-        self.ys = np.linspace(0, self.map_size, num=self.nof_points)
+        self.xs = np.linspace(0.1*self.map_size, 0.9*self.map_size, num=self.nof_points)
+        self.ys = np.linspace(0.1*self.map_size, 0.9*self.map_size, num=self.nof_points)
         self.line, = self.ax.plot(self.xs, self.ys, marker='o', markersize=6)
         plt.title('Left click to move a point; Right click to add a new point')
         self.drag_index = None
@@ -99,13 +95,12 @@ class RoadFigure:
 
     def redraw(self, nof_points):
         self.nof_points = nof_points
-        self.xs = np.linspace(0, self.map_size, num=self.nof_points)
-        self.ys = np.linspace(0, self.map_size, num=self.nof_points)
+        self.xs = np.linspace(0.1*self.map_size, 0.9*self.map_size, num=self.nof_points)
+        self.ys = np.linspace(0.1*self.map_size, 0.9*self.map_size, num=self.nof_points)
         self.update_canvas()
 
     def set_focus(self):
         self.canvas.get_tk_widget().focus_set() # needed to capture key press events
-
 
 class RoadPointsGUI:
     def __init__(self, map_size=200):
@@ -140,10 +135,13 @@ class RoadPointsGUI:
         self.road_points_entry.pack(fill=tk.X, expand=1, side=tk.LEFT)
         self.road_points_frame.pack(fill=tk.X, side=tk.TOP)
 
-        self.run_test_button = tk.Button(master=self.window, command=self.run_test, text='run test')
-        self.run_test_button.pack(fill=tk.X, side=tk.TOP)
+        self.mock_test_button = tk.Button(master=self.road_points_frame, command=self.run_mock_test, text='Run mock test')
+        self.mock_test_button.pack(side=tk.LEFT)
+        self.beamng_test_button = tk.Button(master=self.road_points_frame, command=self.run_beamng_test, text='Run beamng test')
+        self.beamng_test_button.pack(side=tk.LEFT)
 
-        self.test_result = scrolledtext.ScrolledText(height=15, master=self.window)
+        self.test_result = scrolledtext.ScrolledText(height=20, master=self.window)
+        self.test_result.insert(tk.INSERT, " ")
         self.test_result.pack(fill=tk.X, side=tk.TOP)
 
         self.road_figure = None
@@ -164,18 +162,22 @@ class RoadPointsGUI:
             print('Enter a number')
             self.number_of_road_points = 10
 
+        # This is called when we add or move a road point
         def update_callback(xs, ys):
             road_points = []
-            road_points_str = '['
+            self.road_points_str = '['
+            self.road_points_file_str = ''
             for i in range(xs.shape[0]):
                 road_points.append((xs[i], ys[i]))
                 # TODO: change :.2 to have more precision
-                road_points_str += "({:.2f}, {:.2f})".format(xs[i], ys[i])
+                self.road_points_str += "({:.5f}, {:.5f})".format(xs[i], ys[i])
+                self.road_points_file_str += "{:.5f} {:.5f}".format(xs[i], ys[i])
                 if i < xs.shape[0] - 1:
-                    road_points_str += ','
-            road_points_str += ']'
+                    self.road_points_str += ','
+                    self.road_points_file_str += '\n'
+            self.road_points_str += ']'
             self.road_points_entry.delete(0, tk.END)
-            self.road_points_entry.insert(0, road_points_str)
+            self.road_points_entry.insert(0, self.road_points_str)
 
             if not self.visualize_first_time:
                 self.visualizer_canvas.get_tk_widget().pack_forget()
@@ -199,9 +201,19 @@ class RoadPointsGUI:
 
         return 0
 
-    def run_test(self):
-        print('Running test')
-        return 0
+    def run_test(self, type):
+        with open("../data/road_points.txt", "w") as f:
+            f.write(self.road_points_file_str)
+        output = subprocess.getoutput("python ../../competition.py --visualize-tests --time-budget 10 --executor {} --map-size 200  --module-name src.generators.file_based_generator --class-name FileBasedGenerator".format(type))
+        self.test_result.delete("1.0", tk.END)
+        self.test_result.insert(tk.INSERT, output)
+
+
+    def run_mock_test(self):
+        self.run_test("mock")
+
+    def run_beamng_test(self):
+        self.run_test("beamng")
 
     def start(self):
         self.window.mainloop()

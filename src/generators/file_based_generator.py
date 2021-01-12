@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import logging as log
+import os
 
 from code_pipeline.tests_generation import RoadTestFactory
 
@@ -19,9 +20,17 @@ class FileBasedGenerator():
         log.info("Starting test generation")
 
         road_points = []
-        with open("src/data/road_points.txt", "r") as f:
-            for line in f.readlines():
-                road_points.append(tuple([float(s) for s in line.split()]))
+
+        # TODO: this can be done better
+        if os.path.exists("src/data/road_points.txt"):
+            with open("src/data/road_points.txt", "r") as f:
+                for line in f.readlines():
+                    road_points.append(tuple([float(s) for s in line.split()]))
+        elif os.path.exists("../data/road_points.txt"):
+            with open("../data/road_points.txt", "r") as f:
+                for line in f.readlines():
+                    road_points.append(tuple([float(s) for s in line.split()]))
+
 
         # Creating the RoadTest from the points
         the_test = RoadTestFactory.create_road_test(road_points)
