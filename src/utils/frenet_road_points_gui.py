@@ -213,8 +213,6 @@ class RoadPointsGUI:
                 return None
 
             (xs, ys) = frenet.frenet_to_cartesian(x0, y0, theta0, ss, kappas)
-            print(xs)
-            print(ys)
 
             road_points = []
             self.road_points_str = '['
