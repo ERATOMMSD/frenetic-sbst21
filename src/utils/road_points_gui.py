@@ -28,14 +28,12 @@ class RoadFigure:
         return nearest_i
 
     def button_press_callback(self, event):
-        print("button press : {:.2f} - {:.2f}".format(event.x, event.y))
         txy = self.ax.transData.inverted().transform([event.x, event.y])
         tx = txy[0]
         ty = txy[1]
         self.drag_index = self.get_nearest_index(tx, ty)
 
     def button_release_callback(self, event):
-        print("button release : {:.2f} - {:.2f}".format(event.x, event.y))
         txy = self.ax.transData.inverted().transform([event.x, event.y])
         tx = txy[0]
         ty = txy[1]
