@@ -130,3 +130,6 @@ dmypy.json
 
 #PyCharm
 .idea/
+
+# Road points file for GUI
+src/data/road_points.txt

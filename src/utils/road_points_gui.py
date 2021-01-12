@@ -8,7 +8,6 @@ import tkinter.scrolledtext as scrolledtext
 import subprocess
 
 sys.path.append('../..')
-print(sys.path)
 
 import code_pipeline.tests_generation as test
 import another_visualizer as vis
@@ -42,7 +41,6 @@ class RoadFigure:
         ty = txy[1]
         if self.drag_index is not None:
             i = self.drag_index
-            print(event.button)
             if event.button == MouseButton.LEFT:
                 self.xs[i] = tx
                 self.ys[i] = ty
@@ -51,11 +49,8 @@ class RoadFigure:
                 old_ys = self.ys
                 self.xs = np.zeros(self.xs.shape[0] + 1)
                 self.ys = np.zeros(self.ys.shape[0] + 1)
-                print(self.xs.shape)
-                print(old_xs.shape)
                 self.xs[0:i+1] = old_xs[0:i+1]
                 self.ys[0:i+1] = old_ys[0:i+1]
-                print("{:.2f} - {:.2f}".format(tx, ty))
                 self.xs[i+1] = tx
                 self.ys[i+1] = ty
                 if i < self.xs.shape[0] - 1:
@@ -117,7 +112,7 @@ class RoadPointsGUI:
         self.nof_points_entry.insert(0, '10')
         self.nof_points_entry.pack(fill=tk.X, expand=1, side=tk.LEFT)
 
-        self.show_button = tk.Button(master=self.top_frame, command=self.show_map, text='Show road')
+        self.show_button = tk.Button(master=self.top_frame, command=self.show_road, text='Show road')
         self.show_button.pack(side=tk.LEFT)
 
         self.center_frame = tk.Frame(master=self.window)
@@ -148,18 +143,17 @@ class RoadPointsGUI:
         self.visualizer = None
         self.visualize_first_time = True
 
-        self.show_map()
+        self.show_road()
 
-
-    def show_map(self):
-        # how to show matplotlib figure in tk:
-        # https://www.geeksforgeeks.org/how-to-embed-matplotlib-charts-in-tkinter-gui/
-        print('Showing map')
+    def show_road(self):
+        # clean test result
+        self.test_result.delete("1.0", tk.END)
+        self.test_result.insert(tk.INSERT, " ")
 
         try:
             self.number_of_road_points = int(self.nof_points_entry.get().strip())
         except ValueError:
-            print('Enter a number')
+            print('Number of road points must be a number!')
             self.number_of_road_points = 10
 
         # This is called when we add or move a road point
@@ -179,6 +173,8 @@ class RoadPointsGUI:
             self.road_points_entry.delete(0, tk.END)
             self.road_points_entry.insert(0, self.road_points_str)
 
+            # how to show matplotlib figure in tk:
+            # https://www.geeksforgeeks.org/how-to-embed-matplotlib-charts-in-tkinter-gui/
             if not self.visualize_first_time:
                 self.visualizer_canvas.get_tk_widget().pack_forget()
                 self.visualizer_toolbar.pack_forget()
