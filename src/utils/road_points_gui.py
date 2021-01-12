@@ -2,10 +2,11 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 from matplotlib.backend_bases import MouseButton
 import numpy as np
+import os
+import subprocess
 import sys
 import tkinter as tk
 import tkinter.scrolledtext as scrolledtext
-import subprocess
 
 sys.path.append('../..')
 
@@ -196,6 +197,8 @@ class RoadPointsGUI:
         return 0
 
     def run_test(self, type):
+        if not os.path.exists('../data'):
+            os.makedirs('../data')
         with open("../data/road_points.txt", "w") as f:
             f.write(self.road_points_file_str)
         output = subprocess.getoutput("python ../../competition.py --visualize-tests --time-budget 10 --executor {} --map-size 200  --module-name src.generators.file_based_generator --class-name FileBasedGenerator".format(type))
