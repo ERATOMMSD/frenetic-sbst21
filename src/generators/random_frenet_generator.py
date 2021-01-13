@@ -24,21 +24,25 @@ class RandomFrenetGenerator():
             log.info("Starting test generation. Remaining time %s", self.executor.get_remaining_time())
 
             # Currently using an initial setup similar to the GUI.
-            frenet_step = 20
+            frenet_step = 13
             y0 = 10
             x0 = self.map_size / 2
             theta0 = 1.57
+            kappa_delta = 0.07
+            kappa_bound = 0.05
 
             ss = np.arange(y0 + frenet_step, self.map_size, frenet_step)
 
             kappas = [0.0] * len(ss)
 
             for i, kp in enumerate(kappas):
-                kappas[i] = random.choice(np.linspace(max(-0.05, kappas[i-1] - 0.025), min(0.05, kappas[i-1] + 0.025)))
+                kappas[i] = random.choice(np.linspace(max(-kappa_bound, kappas[i-1] - kappa_delta),
+                                                      min(kappa_bound, kappas[i-1] + kappa_delta)))
 
             # Transforming the frenet points to cartesian
             (xs, ys) = frenet.frenet_to_cartesian(x0, y0, theta0, ss, kappas)
-            road_points = list(zip(xs, ys))
+
+            road_points = self.reframe_road(xs, ys)
 
             # Some more debugging
             log.info("Generated test using: %s", road_points)
@@ -53,3 +57,22 @@ class RandomFrenetGenerator():
 
             if self.executor.road_visualizer:
                 sleep(5)
+
+    def reframe_road(self, xs, ys):
+        margin = 10
+        if max(xs) > self.map_size:
+            shift = min(xs) + margin
+            xs = list(map(lambda x: x - shift, xs))
+            log.debug('Shifting to the left')
+        elif min(xs) < margin:
+            shift = self.map_size - max(xs) - margin
+            xs = list(map(lambda x: x + shift, xs))
+            log.debug('Shifting to the right')
+        if min(ys) < margin:
+            shift = self.map_size - max(ys) - margin
+            ys = list(map(lambda y: y + shift, ys))
+            log.debug('Shifting to the top')
+        elif max(ys) > self.map_size:
+            # Probably can't do much since I started at the bottom...
+            pass
+        return list(zip(xs, ys))
