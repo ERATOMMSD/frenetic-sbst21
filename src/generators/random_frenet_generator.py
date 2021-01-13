@@ -61,17 +61,17 @@ class RandomFrenetGenerator():
     def reframe_road(self, xs, ys):
         margin = 10
         if max(xs) > self.map_size:
-            shift = min(xs) + margin
+            shift = min(xs) - margin
             xs = list(map(lambda x: x - shift, xs))
-            log.debug('Shifting to the left')
+            log.info('Shifting to the left')
         elif min(xs) < margin:
             shift = self.map_size - max(xs) - margin
             xs = list(map(lambda x: x + shift, xs))
-            log.debug('Shifting to the right')
+            log.info('Shifting to the right')
         if min(ys) < margin:
             shift = self.map_size - max(ys) - margin
             ys = list(map(lambda y: y + shift, ys))
-            log.debug('Shifting to the top')
+            log.info('Shifting to the top')
         elif max(ys) > self.map_size:
             # Probably can't do much since I started at the bottom...
             pass
