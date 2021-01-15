@@ -196,15 +196,18 @@ class RoadPointsGUI:
 
         return 0
 
-    def run_test(self, type):
+
+    def run_test(self, test_type):
         if not os.path.exists('../data'):
             os.makedirs('../data')
         with open("../data/road_points.txt", "w") as f:
             f.write(self.road_points_file_str)
-        output = subprocess.getoutput("python ../../competition.py --visualize-tests --time-budget 10 --executor {} --map-size 200  --module-name src.generators.file_based_generator --class-name FileBasedGenerator".format(type))
+        command = "python ../../competition.py --time-budget 300 --module-name src.generators.naive_generator --class-name NaiveGenerator --executor beamng --beamng-home D:\\Programs\\BeamNG.research.v1.7.0.1 --beamng-user C:\\Users\\mmsd-admin\\Documents\\BeamNG.research"
+        if test_type == "mock":
+            command = "python ../../competition.py --time-budget 10 --executor mock --map-size 200  --module-name src.generators.file_based_generator --class-name FileBasedGenerator"
+        output = subprocess.getoutput(command)
         self.test_result.delete("1.0", tk.END)
         self.test_result.insert(tk.INSERT, output)
-
 
     def run_mock_test(self):
         self.run_test("mock")
