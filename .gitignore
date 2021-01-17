@@ -133,3 +133,6 @@ dmypy.json
 
 # Road points file for GUI
 src/data/road_points.txt
+
+# CSV files
+experiments/*.csv
