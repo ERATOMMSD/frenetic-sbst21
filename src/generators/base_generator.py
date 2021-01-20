@@ -3,6 +3,9 @@ import logging as log
 import numpy as np
 import pandas as pd
 import itertools as it
+import os
+from pathlib import Path
+
 from time import sleep
 from datetime import datetime
 from code_pipeline.tests_generation import RoadTestFactory
@@ -58,6 +61,10 @@ class BaseGenerator(ABC):
             # parent info
             for k, v in parent_info.items():
                 info[k] = v
+
+            # Retrieving file name
+            last_file = sorted(Path('simulations/beamng_executor').iterdir(), key=os.path.getmtime)[-1]
+            info['simulation_file'] = last_file.name
 
             # Logging some info for debugging
             log.info('Min oob_distance: {:0.3f}'.format(info['min_oob_distance']))
