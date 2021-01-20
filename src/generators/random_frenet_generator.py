@@ -130,19 +130,13 @@ class RandomFrenetGenerator(BaseGenerator):
         Returns:
             A representation of the road that fits the map size (when possible).
         """
-        if max(xs) > self.map_size - self.margin:
-            shift = min(xs) - self.margin
-            xs = list(map(lambda x: x - shift, xs))
-            log.info('Shifting to the left')
-        elif min(xs) < self.margin:
-            shift = self.map_size - max(xs) - self.margin
-            xs = list(map(lambda x: x + shift, xs))
-            log.info('Shifting to the right')
-        if min(ys) < self.margin:
-            shift = self.map_size - max(ys) - self.margin
-            ys = list(map(lambda y: y + shift, ys))
-            log.info('Shifting to the top')
-        elif max(ys) > self.map_size - self.margin:
-            # Probably can't do much since I started at the bottom...
-            pass
+        min_xs = min(xs)
+        min_ys = min(ys)
+        road_width = 10  # TODO: How to get the exact road width?
+        if (max(xs) - min_xs + road_width > self.map_size - self.margin) \
+            or (max(ys) - min_ys + road_width > self.map_size - self.margin):
+            log.info("Road won't fit")
+            # TODO: Fail the entire test and start over
+        xs = list(map(lambda x: x - min_xs + road_width, xs))
+        ys = list(map(lambda y: y - min_ys + road_width, ys))
         return list(zip(xs, ys))
