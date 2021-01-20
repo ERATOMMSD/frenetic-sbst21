@@ -25,7 +25,7 @@ class RandomFrenetGenerator(BaseGenerator):
         sleep(10)
 
     def generate_random_tests(self):
-        while self.executor.get_remaining_time() > self.time_budget * (1 - self.random_gen_budget):
+        while self.executor.get_remaining_time() > self.time_budget * (1.0 - self.random_gen_budget):
             log.info("Random generation. Remaining time %s", self.executor.get_remaining_time())
             kappas, road_points = self.generate_random_test()
             self.execute_frenet_test(kappas)
@@ -75,7 +75,7 @@ class RandomFrenetGenerator(BaseGenerator):
     @staticmethod
     def random_modification(kappas):
         # Randomly modified kappa
-        i = random.randint(0, len(kappas))
+        i = random.randint(0, len(kappas)-1)
         kappas[i] += random.choice(np.linspace(-0.05, 0.05))
         return kappas
 
