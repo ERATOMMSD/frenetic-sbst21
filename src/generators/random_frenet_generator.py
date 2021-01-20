@@ -66,11 +66,11 @@ class RandomFrenetGenerator(BaseGenerator):
                 log.info('Mutation function: {:s}'.format(name))
                 log.info('Parent ({:s}) {:0.3f} accum_neg_oob and {:0.3f} min oob distance'.format(row['outcome'], row['accum_neg_oob'], row['min_oob_distance']))
                 m_kappas = function(kappas)
-                self.execute_frenet_test(m_kappas, method=name)
+                self.execute_frenet_test(m_kappas, method=name, parent_info=parent_info)
         return
 
-    def execute_frenet_test(self, kappas, method='random'):
-        return self.execute_test(self.kappas_to_road_points(kappas), method=method, extra_info={'kappas': kappas})
+    def execute_frenet_test(self, kappas, method='random', parent_info={}):
+        return self.execute_test(self.kappas_to_road_points(kappas), method=method, parent_info=parent_info, extra_info={'kappas': kappas})
 
     @staticmethod
     def random_modification(kappas):
