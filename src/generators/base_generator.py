@@ -51,7 +51,9 @@ class BaseGenerator(ABC):
             'wheelspeed', 'vel_kmh', 'oob_counter', 'oob_distance']
             functions = [('max', np.max), ('min', np.min), ('mean', np.mean), ('avg', np.average)]
             for metric, (name, func) in it.product(metrics, functions):
-                info['{:s}_{:s}'.format(name, metric)] = func([y for y in map(lambda x: getattr(x, metric), execution_data) if y is not None])
+                metric_data = [y for y in map(lambda x: getattr(x, metric), execution_data) if y is not None]
+                if metric_data:
+                    info['{:s}_{:s}'.format(name, metric)] = func(metric_data)
             info['max_oob_percentage'] = execution_data[-1].max_oob_percentage
 
             # complex metrics
