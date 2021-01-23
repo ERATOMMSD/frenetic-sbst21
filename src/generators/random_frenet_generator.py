@@ -32,41 +32,58 @@ class RandomFrenetGenerator(BaseGenerator):
         return
 
     def generate_mutants(self):
+        # Initializing current tests as generation 0 to track how many generations took to fail.
+        self.df['generation'] = 0
+        self.df['visited'] = False
+        print(self.df.head())
         # Iterating the tests according to the value of the oob_percentage (failed first) and min_oob_distance (closer to fail).
-        # TODO: This shouldn't be two phase generation [random, mutants of rnd].
-        for index, row in self.df[self.df['outcome'] != 'INVALID'].sort_values(['max_oob_percentage', 'min_oob_distance'], ascending=(False, True)).iterrows():
+        while self.executor.get_remaining_time() > 0:
+            parent = self.df[(self.df.outcome == 'PASS') & ~self.df.visited].sort_values('min_oob_distance', ascending=True).head(1)
+            self.df.at[parent.index, 'visited'] = True
 
             # Mutations to the road
             # TODO: Is it possible to obtain the kappas given cartesians?
-            road_points = row['road']
+            road_points = parent.road.item()
             if self.executor.get_remaining_time() <= 0:
                 return
 
             # Parent info to be added to the dataframe
-            parent_info = {'parent_index': index, 'parent_outcome': row['outcome'], 'parent_min_oob_distance': row['min_oob_distance']}
+            parent_info = {'parent_index': parent.index, 'parent_outcome': parent.outcome.item(),
+                           'parent_min_oob_distance': parent.min_oob_distance.item(),
+                           'generation': parent.generation.item() + 1}
 
             # Execute reversed original test
             log.info('Mutation function: {:s}'.format('reverse road'))
-            log.info('Parent ({:s}) {:0.2f} accum_neg_oob and {:0.2f} min oob distance'.format(row['outcome'], row['accum_neg_oob'], row['min_oob_distance']))
+            log.info('Parent ({:s}) {:0.3f} accum_neg_oob and {:0.3f} min oob distance'.format(parent.outcome.item(),
+                                                                                               parent.accum_neg_oob.item(),
+                                                                                               parent.min_oob_distance.item()))
+
             self.execute_test(road_points[::-1], method='reversed road', parent_info=parent_info)
 
             # Mutations to the kappas
             # TODO: Implement more interesting and smarter mutations such as adding a kappa, modifying paths, etc.
-            kappas = row['kappas']
-            kappa_mutations = [('reverse kappas', lambda ks: ks[::-1]),
-                               ('split and swap kappas', lambda ks: ks[int(len(ks)/2):] + ks[:int(len(ks)/2)]),
-                               ('flip sign kappas', lambda ks: list(map(lambda x: x * -1.0, ks))),
-                               ('increase kappas 10%', lambda ks: list(map(lambda x: x * 1.1, ks))),
-                               ('randomly modify a kappa', self.random_modification)]
+            kappas = parent.kappas.item()
+            # kappas might be empty if the parent was obtained from reverse road points mutation
+            if kappas:
+                kappa_mutations = [('reverse kappas', lambda ks: ks[::-1]),
+                                   ('split and swap kappas', lambda ks: ks[int(len(ks)/2):] + ks[:int(len(ks)/2)]),
+                                   ('flip sign kappas', lambda ks: list(map(lambda x: x * -1.0, ks))),
+                                   ('increase kappas 10%', lambda ks: list(map(lambda x: x * 1.1, ks))),
+                                   ('randomly modify a kappa', self.random_modification)]
 
-            for name, function in kappa_mutations:
-                if self.executor.get_remaining_time() <= 0:
-                    return
-                log.info("Generating mutants. Remaining time %s", self.executor.get_remaining_time())
-                log.info('Mutation function: {:s}'.format(name))
-                log.info('Parent ({:s}) {:0.3f} accum_neg_oob and {:0.3f} min oob distance'.format(row['outcome'], row['accum_neg_oob'], row['min_oob_distance']))
-                m_kappas = function(kappas)
-                self.execute_frenet_test(m_kappas, method=name, parent_info=parent_info)
+                for name, function in kappa_mutations:
+                    if self.executor.get_remaining_time() <= 0:
+                        return
+                    log.info("Generating mutants. Remaining time %s", self.executor.get_remaining_time())
+                    log.info('Mutation function: {:s}'.format(name))
+                    log.info('Parent ({:s}) {:0.3f} accum_neg_oob and {:0.3f} min oob distance'.format(parent.outcome.item(),
+                                                                                                       parent.accum_neg_oob.item(),
+                                                                                                       parent.min_oob_distance.item()))
+                    m_kappas = function(kappas)
+                    outcome = self.execute_frenet_test(m_kappas, method=name, parent_info=parent_info)
+                    # When there is a mutant of this branch that fails, we stop mutating this branch.
+                    if outcome == 'FAIL':
+                        break
         return
 
     def execute_frenet_test(self, kappas, method='random', parent_info={}):
