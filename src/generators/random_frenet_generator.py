@@ -108,7 +108,7 @@ class RandomFrenetGenerator(BaseGenerator):
         # Using the bottom center of the map.
         y0 = self.margin
         x0 = self.map_size / 2
-        ss = np.arange(y0, self.map_size, frenet_step)
+        ss = np.arange(y0, (len(kappas) + 1) * frenet_step, frenet_step)
 
         # Transforming the frenet points to cartesian
         (xs, ys) = frenet.frenet_to_cartesian(x0, y0, theta0, ss, kappas)
@@ -127,10 +127,13 @@ class RandomFrenetGenerator(BaseGenerator):
         Returns:
             a list of kappa values and its cartesian representation.
         """
+        # Number of generated kappa points depends on the size of the map + random variation
+        number_of_points = int(self.map_size/frenet_step) + random.randint(-5, 15)
+
+        print(number_of_points)
 
         # Producing randomly generated kappas for the given setting.
-        ss = np.arange(self.margin, self.map_size, frenet_step)
-        kappas = [0.0] * len(ss)
+        kappas = [0.0] * number_of_points
         for i in range(len(kappas)):
             kappas[i] = random.choice(np.linspace(max(-kappa_bound, kappas[i - 1] - kappa_delta),
                                                   min(kappa_bound, kappas[i - 1] + kappa_delta)))
