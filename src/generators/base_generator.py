@@ -38,7 +38,8 @@ class BaseGenerator(ABC):
         # Print the result from the test and continue
         log.info("test_outcome %s", test_outcome)
         log.info("description %s", description)
-        info = {'outcome': test_outcome, 'description': description, 'road': road_points, 'method': method}
+        info = {'outcome': test_outcome, 'description': description, 'road': road_points, 'method': method,
+                'visited': False}
 
         # Adding extra info to the dataframe
         for k, v in extra_info.items():
@@ -75,7 +76,7 @@ class BaseGenerator(ABC):
         self.df = self.df.append(info, ignore_index=True)
         if self.executor.road_visualizer:
             sleep(5)
-        return
+        return info['outcome']
 
     @staticmethod
     def accumulated_negative_oob(execution_data):
