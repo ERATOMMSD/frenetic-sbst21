@@ -18,19 +18,21 @@ class RandomFrenetGenerator(BaseGenerator):
         self.margin = 10
         # Storing the ancestors of a test that failed to reduce close relatives.
         self.ancestors_of_failed_tests = set()
-        self.ancestors_lookahead = 2
+        self.ancestors_lookahead = 5
+        # Bounds on the number of kappas of randomly generated paths
+
         super().__init__(time_budget, executor, map_size)
 
     def start(self):
-        self.generate_random_tests()
+        self.generate_initial_population()
         self.generate_mutants()
         self.store_dataframe('frenet')
         sleep(10)
 
-    def generate_random_tests(self):
+    def generate_initial_population(self):
         while self.executor.get_remaining_time() > self.time_budget * (1.0 - self.random_gen_budget):
             log.info("Random generation. Remaining time %s", self.executor.get_remaining_time())
-            kappas, road_points = self.generate_random_test()
+            kappas = self.generate_random_test()
             self.execute_frenet_test(kappas)
         return
 
@@ -41,10 +43,14 @@ class RandomFrenetGenerator(BaseGenerator):
 
         # Iterating the tests according to the value of the min_oob_distance (closer to fail).
         while self.executor.get_remaining_time() > 0:
-            parent = self.df[(self.df.outcome != 'INVALID') & ~self.df.visited].sort_values('min_oob_distance',
-                                                                                            ascending=True).head(1)
-            self.df.at[parent.index, 'visited'] = True
-            self.mutate_test(parent)
+            parent = self.df[(self.df.outcome != 'INVALID') & (~self.df.visited) & (self.df.min_oob_distance < -0.5)].sort_values('min_oob_distance', ascending=True).head(1)
+            if len(parent):
+                self.df.at[parent.index, 'visited'] = True
+                self.mutate_test(parent)
+            else:
+                # If there is no good parent try random generation
+                kappas = self.generate_random_test()
+                self.execute_frenet_test(kappas)
 
     def mutate_test(self, parent):
         # Parent info to be added to the dataframe
@@ -111,14 +117,12 @@ class RandomFrenetGenerator(BaseGenerator):
                 name, function = kappa_mutations[i]
                 log.info("Generating mutants. Remaining time %s", self.executor.get_remaining_time())
                 log.info('Mutation function: {:s}'.format(name))
-                log.info(
-                    'Parent ({:s}) {:0.3f} accum_neg_oob and {:0.3f} min oob distance'.format(parent.outcome.item(),
+                log.info('Parent ({:s}) {:0.3f} accum_neg_oob and {:0.3f} min oob distance'.format(parent.outcome.item(),
                                                                                               parent.accum_neg_oob.item(),
                                                                                               parent.min_oob_distance.item()))
                 m_kappas = function(kappas)
-                outcome = self.execute_frenet_test(m_kappas, method=name, parent_info=parent_info,
-                                                   extra_info=extra_info)
-                log.info(parent_info)
+                outcome = self.execute_frenet_test(m_kappas, method=name, parent_info=parent_info, extra_info=extra_info, avoid_weaker=True)
+
                 # When there is a mutant of this branch that fails, we stop mutating this branch.
                 if outcome == 'FAIL':
                     for ancestor_id in parent_info['ancestors'][-self.ancestors_lookahead:]:
@@ -166,10 +170,10 @@ class RandomFrenetGenerator(BaseGenerator):
             modified_kappas[i] += random.choice(np.linspace(-0.05, 0.05))
         return modified_kappas
 
-    def execute_frenet_test(self, kappas, method='random', parent_info={}, extra_info={}):
+    def execute_frenet_test(self, kappas, method='random', parent_info={}, extra_info={}, avoid_weaker=False):
         extra_info['kappas'] = kappas
         return self.execute_test(self.kappas_to_road_points(kappas), method=method, parent_info=parent_info,
-                                 extra_info=extra_info)
+                                 extra_info=extra_info, avoid_weaker=avoid_weaker)
 
     def kappas_to_road_points(self, kappas, frenet_step=10, theta0=1.57):
         """
@@ -190,7 +194,7 @@ class RandomFrenetGenerator(BaseGenerator):
         road_points = self.reframe_road(xs, ys)
         return road_points
 
-    def generate_random_test(self, frenet_step=10, theta0=1.57, kappa_delta=0.05, kappa_bound=0.07):
+    def generate_random_test(self, frenet_step=10, kappa_delta=0.05, kappa_bound=0.07):
         """ Generates a test using frenet framework to determine the curvature of the points.
          Currently using an initial setup similar to the GUI.
          TODO: Make the frenet setup part of the experiment to adapt w.r.t. the output of the tests.
@@ -210,9 +214,7 @@ class RandomFrenetGenerator(BaseGenerator):
         for i in range(len(kappas)):
             kappas[i] = RandomFrenetGenerator.get_next_kappa(kappas[i - 1], kappa_bound, kappa_delta)
 
-        # Transforming the frenet points to cartesian
-        road_points = self.kappas_to_road_points(kappas, frenet_step=frenet_step, theta0=theta0)
-        return kappas, road_points
+        return kappas
 
     def reframe_road(self, xs, ys):
         """

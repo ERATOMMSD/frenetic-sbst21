@@ -27,7 +27,7 @@ class BaseGenerator(ABC):
             self.df.to_csv(outfile)
         return
 
-    def execute_test(self, road_points, method='random', extra_info={}, parent_info={}):
+    def execute_test(self, road_points, method='random', extra_info={}, parent_info={}, avoid_weaker=False):
         # Some more debugging
         log.info("Generated test using: %s", road_points)
         the_test = RoadTestFactory.create_road_test(road_points)
@@ -64,6 +64,11 @@ class BaseGenerator(ABC):
             # parent info
             for k, v in parent_info.items():
                 info[k] = v
+
+            # avoid visiting mutants that perform worst than its parents
+            if avoid_weaker and parent_info and info['min_oob_distance'] > info['parent_min_oob_distance']:
+                info['visited'] = True
+                log.info('Weaker mutant: Disabling current test for future mutations.')
 
             # Retrieving file name
             last_file = sorted(Path('simulations/beamng_executor').iterdir(), key=os.path.getmtime)[-1]
