@@ -13,14 +13,17 @@ class RandomFrenetGenerator(BaseGenerator):
 
     def __init__(self, time_budget=None, executor=None, map_size=None):
         # Spending 20% of the time on random generation
+        # Set this value to 1.0 to generate fully random results.
         self.random_gen_budget = 0.2
         # Margin size w.r.t the map
         self.margin = 10
         # Storing the ancestors of a test that failed to reduce close relatives.
         self.ancestors_of_failed_tests = set()
         self.ancestors_lookahead = 5
-        # Bounds on the number of kappas of randomly generated paths
-        super().__init__(time_budget, executor, map_size)
+        # Only considering tests with a min_oob_distance < threshold for mutation
+        # define min_oobd_threshold = 2.0 to remove this feature
+        self.min_oobd_threshold = -0.5
+        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size, strict_father=True)
 
     def start(self):
         self.generate_initial_population()
@@ -36,18 +39,19 @@ class RandomFrenetGenerator(BaseGenerator):
         return
 
     def generate_mutants(self):
-        # Initializing current tests as generation 0 to track how many generations took to fail.
-        self.df['generation'] = 0
-        self.df['visited'] = False
-
         # Iterating the tests according to the value of the min_oob_distance (closer to fail).
         while self.executor.get_remaining_time() > 0:
-            parent = self.df[(self.df.outcome != 'INVALID') & (~self.df.visited) & (self.df.min_oob_distance < -0.5)].sort_values('min_oob_distance', ascending=True).head(1)
+            if 0.0 in set(self.df['visited']) or 1.0 in set(self.df['visited']):
+                # TODO: Not sure why visited initially has 1.0 even though it is always defined as True or False.
+                log.info('Converting visited column to boolean...')
+                self.df['visited'] = self.df['visited'].map(lambda x: True if x == 1.0 else False)
+            parent = self.df[(self.df.outcome != 'INVALID') & (~self.df.visited) & (self.df.min_oob_distance < self.min_oobd_threshold)].sort_values('min_oob_distance', ascending=True).head(1)
             if len(parent):
                 self.df.at[parent.index, 'visited'] = True
                 self.mutate_test(parent)
             else:
                 # If there is no good parent try random generation
+                log.info('There is no good candidate for mutation.')
                 kappas = self.generate_random_test()
                 self.execute_frenet_test(kappas)
 
@@ -120,7 +124,7 @@ class RandomFrenetGenerator(BaseGenerator):
                                                                                               parent.accum_neg_oob.item(),
                                                                                               parent.min_oob_distance.item()))
                 m_kappas = function(kappas)
-                outcome = self.execute_frenet_test(m_kappas, method=name, parent_info=parent_info, extra_info=extra_info, avoid_weaker=True)
+                outcome = self.execute_frenet_test(m_kappas, method=name, parent_info=parent_info, extra_info=extra_info)
 
                 # When there is a mutant of this branch that fails, we stop mutating this branch.
                 if outcome == 'FAIL':
@@ -171,8 +175,11 @@ class RandomFrenetGenerator(BaseGenerator):
 
     def execute_frenet_test(self, kappas, method='random', parent_info={}, extra_info={}, avoid_weaker=False):
         extra_info['kappas'] = kappas
-        return self.execute_test(self.kappas_to_road_points(kappas), method=method, parent_info=parent_info,
-                                 extra_info=extra_info, avoid_weaker=avoid_weaker)
+        road_points = self.kappas_to_road_points(kappas)
+        if road_points:
+            return self.execute_test(road_points, method=method, parent_info=parent_info, extra_info=extra_info)
+        else:
+            return 'CANNOT_REFRAME'
 
     def kappas_to_road_points(self, kappas, frenet_step=10, theta0=1.57):
         """
@@ -228,7 +235,8 @@ class RandomFrenetGenerator(BaseGenerator):
         road_width = 10  # TODO: How to get the exact road width?
         if (max(xs) - min_xs + road_width > self.map_size - self.margin) \
                 or (max(ys) - min_ys + road_width > self.map_size - self.margin):
-            log.info("Road won't fit")
+            log.info("Skip: Road won't fit")
+            return None
             # TODO: Fail the entire test and start over
         xs = list(map(lambda x: x - min_xs + road_width, xs))
         ys = list(map(lambda y: y - min_ys + road_width, ys))
