@@ -39,7 +39,7 @@ class BaseGenerator(ABC):
         log.info("test_outcome %s", test_outcome)
         log.info("description %s", description)
         info = {'outcome': test_outcome, 'description': description, 'road': road_points, 'method': method,
-                'visited': False}
+                'visited': False, 'ancestors': []}
 
         # Adding extra info to the dataframe
         for k, v in extra_info.items():
