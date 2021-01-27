@@ -14,7 +14,6 @@ class RandomGenerator(BaseGenerator):
     """
 
     def start(self):
-        df = pd.DataFrame()
 
         while self.executor.get_remaining_time() > 0:
             # Some debugging
