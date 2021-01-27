@@ -28,4 +28,4 @@ class JanusGenerator(BaseGenerator):
 
             self.execute_test(road_points)
 
-        self.store_dataframe('deepjanus')
+        self.store_dataframe()

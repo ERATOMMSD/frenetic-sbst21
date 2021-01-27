@@ -32,4 +32,4 @@ class RandomGenerator(BaseGenerator):
             if self.executor.road_visualizer:
                 sleep(5)
 
-        self.store_dataframe('random')
+        self.store_dataframe()

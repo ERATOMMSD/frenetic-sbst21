@@ -20,13 +20,12 @@ class RandomFrenetGenerator(BaseGenerator):
         self.ancestors_of_failed_tests = set()
         self.ancestors_lookahead = 5
         # Bounds on the number of kappas of randomly generated paths
-
         super().__init__(time_budget, executor, map_size)
 
     def start(self):
         self.generate_initial_population()
         self.generate_mutants()
-        self.store_dataframe('frenet')
+        self.store_dataframe()
         sleep(10)
 
     def generate_initial_population(self):

@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 import logging as log
 import numpy as np
 import pandas as pd
@@ -18,14 +18,24 @@ class BaseGenerator(ABC):
         self.executor = executor
         self.map_size = map_size
         self.df = pd.DataFrame()
+        creation_date = datetime.now().strftime('%Y%m%d-%H%M%S')
+        self.file_name = f'experiments/{creation_date}-{self.__class__.__name__}-results.csv'
+        self.columns_number = 0
+        log.info('ERATO experiment output is stored in', self.file_name)
 
-    def store_dataframe(self, name):
-        log.info("Storing the results in to a csv file.")
-        # Storing the results as csv in experiments folder
-        file_date = datetime.now().strftime('%Y%m%d-%H%M')
-        with open('experiments/{:s}-{:s}-results.csv'.format(file_date, name), 'w') as outfile:
+    def store_dataframe(self):
+        log.info("Storing the all the experiment results in a csv.")
+        # Storing the results as csv in experiments folders
+        with open(self.file_name, 'w') as outfile:
             self.df.to_csv(outfile)
-        return
+
+    def update_data_frame(self):
+        if self.columns_number < len(self.df.columns):
+            self.store_dataframe()
+            self.columns_number = len(self.df.columns)
+        else:
+            log.info('Appending data to the experiments results to a csv.')
+            self.df.to_csv(self.file_name, mode='a', header=True)
 
     def execute_test(self, road_points, method='random', extra_info={}, parent_info={}, avoid_weaker=False):
         # Some more debugging
@@ -79,6 +89,11 @@ class BaseGenerator(ABC):
             log.info('Accumulated negative oob_distance: {:0.3f}'.format(accum_neg_oob))
 
         self.df = self.df.append(info, ignore_index=True)
+
+        # Updating dataframe when having new valid tests.
+        if info['outcome'] != 'INVALID':
+            self.update_data_frame()
+
         if self.executor.road_visualizer:
             sleep(5)
         return info['outcome']
