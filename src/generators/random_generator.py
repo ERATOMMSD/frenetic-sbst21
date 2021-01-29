@@ -14,7 +14,6 @@ class RandomGenerator(BaseGenerator):
     """
 
     def start(self):
-        df = pd.DataFrame()
 
         while self.executor.get_remaining_time() > 0:
             # Some debugging
@@ -33,4 +32,4 @@ class RandomGenerator(BaseGenerator):
             if self.executor.road_visualizer:
                 sleep(5)
 
-        self.store_dataframe('random')
+        self.store_dataframe()

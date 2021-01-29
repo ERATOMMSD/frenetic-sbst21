@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 import logging as log
 import numpy as np
 import pandas as pd
@@ -13,19 +13,33 @@ from code_pipeline.tests_generation import RoadTestFactory
 
 class BaseGenerator(ABC):
 
-    def __init__(self, time_budget=None, executor=None, map_size=None):
+    def __init__(self, time_budget=None, executor=None, map_size=None, strict_father=False):
         self.time_budget = time_budget
         self.executor = executor
         self.map_size = map_size
         self.df = pd.DataFrame()
+        creation_date = datetime.now().strftime('%Y%m%d-%H%M%S')
+        self.file_name = f'experiments/{creation_date}-{self.__class__.__name__}-results.csv'
+        self.columns_number = 0
+        log.info(f'ERATO experiment output is stored in {self.file_name}')
 
-    def store_dataframe(self, name):
-        log.info("Storing the results in to a csv file.")
-        # Storing the results as csv in experiments folder
-        file_date = datetime.now().strftime('%Y%m%d-%H%M')
-        with open('experiments/{:s}-{:s}-results.csv'.format(file_date, name), 'w') as outfile:
+        # Adding mutants for future mutation only if its min_oob_distance is better than its parent's min_oob_distance
+        # min_oob_distance < parent_min_oob_distance
+        self.strict_father = strict_father
+
+    def store_dataframe(self):
+        log.info("Storing the all the experiment results in a csv.")
+        # Storing the results as csv in experiments folders
+        with open(self.file_name, 'w') as outfile:
             self.df.to_csv(outfile)
-        return
+
+    def update_data_frame(self):
+        if self.columns_number < len(self.df.columns):
+            self.store_dataframe()
+            self.columns_number = len(self.df.columns)
+        else:
+            log.info('Appending data to the experiments results to a csv.')
+            self.df.to_csv(self.file_name, mode='a', header=True)
 
     def execute_test(self, road_points, method='random', extra_info={}, parent_info={}):
         # Some more debugging
@@ -39,7 +53,7 @@ class BaseGenerator(ABC):
         log.info("test_outcome %s", test_outcome)
         log.info("description %s", description)
         info = {'outcome': test_outcome, 'description': description, 'road': road_points, 'method': method,
-                'visited': False}
+                'visited': False, 'ancestors': [], 'generation': 0}
 
         # Adding extra info to the dataframe
         for k, v in extra_info.items():
@@ -65,6 +79,11 @@ class BaseGenerator(ABC):
             for k, v in parent_info.items():
                 info[k] = v
 
+            # avoid visiting mutants that perform worst than its parents
+            if self.strict_father and parent_info and info['min_oob_distance'] > info['parent_min_oob_distance']:
+                info['visited'] = True
+                log.info('Weaker mutant: Disabling current test for future mutations.')
+
             # Retrieving file name
             last_file = sorted(Path('simulations/beamng_executor').iterdir(), key=os.path.getmtime)[-1]
             info['simulation_file'] = last_file.name
@@ -74,6 +93,11 @@ class BaseGenerator(ABC):
             log.info('Accumulated negative oob_distance: {:0.3f}'.format(accum_neg_oob))
 
         self.df = self.df.append(info, ignore_index=True)
+
+        # Updating dataframe when having new valid tests.
+        if info['outcome'] != 'INVALID':
+            self.update_data_frame()
+
         if self.executor.road_visualizer:
             sleep(5)
         return info['outcome']
