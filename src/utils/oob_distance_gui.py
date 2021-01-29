@@ -54,10 +54,11 @@ class CurveFigure:
         self.canvas.draw()
         self.canvas.flush_events()
         oob_distances = self.ys
-        kappas = nn.oob_distances_to_kappas(model, oob_distances)
+        kappas = nn.oob_distances_to_kappas(self.nn_model, oob_distances)
         self.update_callback(kappas)
 
     def __init__(self, master, map_size, nof_points, update_callback=None):
+        self.nn_model = nn.get_model('../../rd/80-30-110.trained.weights.json', '../../rd/80-30-110.trained.biases.json')
         self.map_size = map_size
         self.nof_points = nof_points
         self.figure = plt.figure()
@@ -103,7 +104,7 @@ class OobDistangeGUI:
         #
         self.frenet_step_label = tk.Label(master=self.top_frame, text='frenet_step')
         self.frenet_step_label.pack(side=tk.LEFT)
-        self.frenet_step_entry = tk.Entry(master=self.top_frame, state='disabled')
+        self.frenet_step_entry = tk.Entry(master=self.top_frame, state='readonly')
         self.frenet_step_entry.insert(0, '10')
         self.frenet_step_entry.pack(fill=tk.X, expand=1, side=tk.LEFT)
 
@@ -127,7 +128,7 @@ class OobDistangeGUI:
 
         self.nof_points_label = tk.Label(master=self.top_frame, text='Number of oob distances: ')
         self.nof_points_label.pack(side=tk.LEFT)
-        self.nof_points_entry = tk.Entry(master=self.top_frame, state='disabled')
+        self.nof_points_entry = tk.Entry(master=self.top_frame, state='readonly')
         self.nof_points_entry.insert(0, '19')
         self.nof_points_entry.pack(fill=tk.X, expand=1, side=tk.LEFT)
 
@@ -176,7 +177,7 @@ class OobDistangeGUI:
             self.number_of_s_points = int(self.nof_points_entry.get().strip())
         except ValueError:
             print('Number of s points must be a number!')
-            self.number_of_s_points = 10
+            self.number_of_s_points = 19
 
         try:
             self.x0 = float(self.x0_entry.get().strip())
@@ -208,7 +209,7 @@ class OobDistangeGUI:
             y0 = self.y0
             theta0 = self.theta0
 
-            ss = np.arange(0, kappas.shape[0] * frenet_step, frenet_step)
+            ss = np.arange(0, kappas.shape[0] * self.frenet_step, self.frenet_step)
 
             (xs, ys) = frenet.frenet_to_cartesian(x0, y0, theta0, ss, kappas)
 
