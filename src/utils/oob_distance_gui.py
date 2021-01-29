@@ -48,7 +48,7 @@ class OobDistancesFigure:
             self.update_canvas()
 
     def update_canvas(self):
-        self.ax.set_ylim([-0.2, 0.2])
+        self.ax.set_ylim([-2.5, 2.5])
         self.line.set_xdata(self.xs)
         self.line.set_ydata(self.ys)
         self.canvas.draw()
