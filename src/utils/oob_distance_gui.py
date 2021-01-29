@@ -15,7 +15,7 @@ import another_visualizer as vis
 import frenet
 import rd.nn as nn
 
-class CurveFigure:
+class OobDistancesFigure:
     # button press/release handling is discussed in: https://matplotlib.org/2.2.2/gallery/event_handling/poly_editor.html?highlight=polygoninteractor
     # https://stackoverflow.com/questions/50439506/dragging-points-in-matplotlib-interactive-plot
     def get_nearest_index(self, tx, ty):
@@ -57,8 +57,9 @@ class CurveFigure:
         kappas = nn.oob_distances_to_kappas(self.nn_model, oob_distances)
         self.update_callback(kappas)
 
-    def __init__(self, master, map_size, nof_points, update_callback=None):
-        self.nn_model = nn.get_model('../../rd/80-30-110.trained.weights.json', '../../rd/80-30-110.trained.biases.json')
+    def __init__(self, master, map_size, nof_points, update_callback, weights_json_filepath, biases_json_filepath):
+        # self.nn_model = nn.get_model('../../rd/80-30-110.trained.weights.json', '../../rd/80-30-110.trained.biases.json')
+        self.nn_model = nn.get_model(weights_json_filepath, biases_json_filepath)
         self.map_size = map_size
         self.nof_points = nof_points
         self.figure = plt.figure()
@@ -69,7 +70,7 @@ class CurveFigure:
         self.line, = self.ax.plot(self.xs, self.ys, marker='o', markersize=6)
         plt.title('Left click to move a point; Right click to add a new point')
         plt.xlabel("$s$")
-        plt.ylabel("Curvature $\\kappa(s)$")
+        plt.ylabel("oob_distances")
         self.drag_index = None
         self.update_callback = update_callback
 
@@ -83,7 +84,8 @@ class CurveFigure:
 
         self.update_canvas()
 
-    def redraw(self, nof_points):
+    def redraw(self, nof_points, weights_json_filepath, biases_json_filepath):
+        self.nn_model = nn.get_model(weights_json_filepath, biases_json_filepath)
         self.nof_points = nof_points
         self.xs = np.linspace(0.1*self.map_size, 0.9*self.map_size, num=self.nof_points)
         self.ys = 0 * self.xs
@@ -97,14 +99,29 @@ class OobDistangeGUI:
         self.map_size = map_size
         self.window = tk.Tk()
 
+        self.top_top_frame = tk.Frame(master=self.window)
+        self.top_top_frame.pack(fill=tk.X, side=tk.TOP)
+
+        self.weights_json_filepath_label = tk.Label(master=self.top_top_frame, text='NN weights json file:')
+        self.weights_json_filepath_label.pack(side=tk.LEFT)
+        self.weights_json_filepath_entry = tk.Entry(master=self.top_top_frame)
+        self.weights_json_filepath_entry.insert(0, '../../rd/80-30-110.trained.weights.json')
+        self.weights_json_filepath_entry.pack(fill=tk.X, expand=1, side=tk.LEFT)
+
+        self.biases_json_filepath_label = tk.Label(master=self.top_top_frame, text='NN biases json file:')
+        self.biases_json_filepath_label.pack(side=tk.LEFT)
+        self.biases_json_filepath_entry = tk.Entry(master=self.top_top_frame)
+        self.biases_json_filepath_entry.insert(0, '../../rd/80-30-110.trained.biases.json')
+        self.biases_json_filepath_entry.pack(fill=tk.X, expand=1, side=tk.LEFT)
+
         self.top_frame = tk.Frame(master=self.window)
         self.top_frame.pack(fill=tk.X, side=tk.TOP)
 
         # TODO: clean up
         #
-        self.frenet_step_label = tk.Label(master=self.top_frame, text='frenet_step')
+        self.frenet_step_label = tk.Label(master=self.top_frame, text='frenet_step:')
         self.frenet_step_label.pack(side=tk.LEFT)
-        self.frenet_step_entry = tk.Entry(master=self.top_frame, state='readonly')
+        self.frenet_step_entry = tk.Entry(master=self.top_frame)
         self.frenet_step_entry.insert(0, '10')
         self.frenet_step_entry.pack(fill=tk.X, expand=1, side=tk.LEFT)
 
@@ -128,7 +145,7 @@ class OobDistangeGUI:
 
         self.nof_points_label = tk.Label(master=self.top_frame, text='Number of oob distances: ')
         self.nof_points_label.pack(side=tk.LEFT)
-        self.nof_points_entry = tk.Entry(master=self.top_frame, state='readonly')
+        self.nof_points_entry = tk.Entry(master=self.top_frame)
         self.nof_points_entry.insert(0, '19')
         self.nof_points_entry.pack(fill=tk.X, expand=1, side=tk.LEFT)
 
@@ -172,12 +189,17 @@ class OobDistangeGUI:
         self.test_result.delete("1.0", tk.END)
         self.test_result.insert(tk.INSERT, " ")
 
+
+        self.weights_json_filepath = self.weights_json_filepath_entry.get().strip()
+        self.biases_json_filepath = self.biases_json_filepath_entry.get().strip()
+
         # TODO: clean up
-        try:
-            self.number_of_s_points = int(self.nof_points_entry.get().strip())
-        except ValueError:
-            print('Number of s points must be a number!')
-            self.number_of_s_points = 19
+        # try:
+        #     self.number_of_s_points = int(self.nof_points_entry.get().strip())
+        # except ValueError:
+        #     print('Number of s points must be a number!')
+        #     self.number_of_s_points = 19
+        self.number_of_s_points = 19
 
         try:
             self.x0 = float(self.x0_entry.get().strip())
@@ -197,11 +219,12 @@ class OobDistangeGUI:
             print('theta0 must be a number!')
             self.theta0 = np.pi / 2
 
-        try:
-            self.frenet_step = float(self.frenet_step_entry.get().strip())
-        except ValueError:
-            print('frenet_step must be a number!')
-            self.frenet_step = 10.0
+        # try:
+        #     self.frenet_step = float(self.frenet_step_entry.get().strip())
+        # except ValueError:
+        #     print('frenet_step must be a number!')
+        #     self.frenet_step = 10.0
+        self.frenet_step = 10.0
 
         # This is called when we add or move a road point
         def update_callback(kappas):
@@ -247,8 +270,8 @@ class OobDistangeGUI:
             self.visualize_first_time = False
             self.kappa_visualizer_figure = plt.figure()
             plt.plot(ss, kappas)
-            plt.xlabel("ss")
-            plt.xlabel("kappas")
+            plt.xlabel("$s$")
+            plt.ylabel("Curvature $\\kappa(s)$")
             self.kappa_visualizer_canvas = FigureCanvasTkAgg(self.kappa_visualizer_figure, master=self.mid_frame)
             self.kappa_visualizer_canvas.draw()
             self.kappa_visualizer_toolbar = NavigationToolbar2Tk(self.kappa_visualizer_canvas, self.mid_frame)
@@ -256,9 +279,9 @@ class OobDistangeGUI:
             self.kappa_visualizer_canvas.get_tk_widget().pack(fill=tk.BOTH, expand=1)
 
         if self.curve_figure is None:
-            self.curve_figure = CurveFigure(self.left_frame, self.map_size, self.number_of_s_points, update_callback)
+            self.curve_figure = OobDistancesFigure(self.left_frame, self.map_size, self.number_of_s_points, update_callback, self.weights_json_filepath, self.biases_json_filepath)
         else:
-            self.curve_figure.redraw(self.number_of_s_points)
+            self.curve_figure.redraw(self.number_of_s_points, self.weights_json_filepath, self.biases_json_filepath)
 
         self.curve_figure.set_focus()
 
