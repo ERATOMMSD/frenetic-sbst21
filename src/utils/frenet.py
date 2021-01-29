@@ -12,5 +12,4 @@ def frenet_to_cartesian(x0, y0, theta0, ss, kappas):
         thetas[i + 1] = thetas[i] + (kappas[i + 1] + kappas[i]) * (ss[i + 1] - ss[i]) / 2.0
         xs[i + 1] = xs[i] + (ss[i + 1] - ss[i]) * np.cos(thetas[i])
         ys[i + 1] = ys[i] + (ss[i + 1] - ss[i]) * np.sin(thetas[i])
-
     return (xs, ys)
