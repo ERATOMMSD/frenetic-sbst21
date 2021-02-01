@@ -69,7 +69,7 @@ class OobDistancesFigure:
         self.ys = 0 * self.xs
         self.ys = oob_values
         self.line, = self.ax.plot(self.xs, self.ys, marker='o', markersize=6)
-        plt.title('Left click to move a point; Right click to add a new point')
+        plt.title('Left click to move a point in $y$ direction')
         plt.xlabel("$s$")
         plt.ylabel("oob_distances")
         self.drag_index = None
