@@ -1,12 +1,13 @@
 import logging as log
-from jmetal.algorithm.singleobjective.genetic_algorithm import GeneticAlgorithm
-from jmetal.operator import BinaryTournamentSelection, PolynomialMutation, SBXCrossover
+from jmetal.algorithm.multiobjective.nsgaii import NSGAII
+from jmetal.operator import PolynomialMutation, SBXCrossover
+from jmetal.util.comparator import DominanceComparator
 from jmetal.util.termination_criterion import StoppingByTime
 from src.generators.base_frenet_generator import BaseFrenetGenerator
 from src.generators.problems.road_problem import RoadGeneration
 
 
-class FreneticGenerator(BaseFrenetGenerator):
+class NSGAIIFrenetGenerator(BaseFrenetGenerator):
 
     def start(self):
 
@@ -17,14 +18,14 @@ class FreneticGenerator(BaseFrenetGenerator):
         problem = RoadGeneration(self, number_of_points)
         log.info("Starting test generation")
 
-        algorithm = GeneticAlgorithm(
+        algorithm = NSGAII(
             problem=problem,
             population_size=100,
             offspring_population_size=100,
-            mutation=PolynomialMutation(1.0 / problem.number_of_variables, 20.0),
-            crossover=SBXCrossover(0.9, 20.0),
-            selection=BinaryTournamentSelection(),
-            termination_criterion=StoppingByTime(max_seconds=self.time_budget)
+            mutation=PolynomialMutation(probability=1.0 / problem.number_of_variables, distribution_index=20.0),
+            crossover=SBXCrossover(probability=0.9, distribution_index=20.0),
+            termination_criterion=StoppingByTime(max_seconds=self.time_budget),
+            dominance_comparator=DominanceComparator()
         )
 
         algorithm.run()

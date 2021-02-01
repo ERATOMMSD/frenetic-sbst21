@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 import logging as log
 import numpy as np
 import pandas as pd
@@ -26,6 +26,10 @@ class BaseGenerator(ABC):
         # Adding mutants for future mutation only if its min_oob_distance is better than its parent's min_oob_distance
         # min_oob_distance < parent_min_oob_distance
         self.strict_father = strict_father
+
+    @abstractmethod
+    def start(self):
+        pass
 
     def store_dataframe(self):
         log.info("Storing the all the experiment results in a csv.")
