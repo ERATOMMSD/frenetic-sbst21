@@ -5,15 +5,15 @@ from time import sleep
 from src.generators.base_frenet_generator import BaseFrenetGenerator
 
 
-class RandomFrenetGenerator(BaseFrenetGenerator):
+class CustomFrenetGenerator(BaseFrenetGenerator):
     """
         Generates tests using the frenet framework to determine curvatures.
     """
 
-    def __init__(self, time_budget=None, executor=None, map_size=None):
+    def __init__(self, time_budget=None, executor=None, map_size=None, strict_father=True, random_budget=0.2):
         # Spending 20% of the time on random generation
         # Set this value to 1.0 to generate fully random results.
-        self.random_gen_budget = 0.2
+        self.random_gen_budget = random_budget
         # Margin size w.r.t the map
         self.margin = 10
         # Storing the ancestors of a test that failed to reduce close relatives.
@@ -24,7 +24,7 @@ class RandomFrenetGenerator(BaseFrenetGenerator):
         # TODO: Consider updating this value after the initial population
         # df[df.outcome != 'INVALID'].min_oob_distance.quantile(0.25)
         self.min_oobd_threshold = -0.5
-        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size, strict_father=True)
+        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size, strict_father=strict_father)
 
     def start(self):
         self.generate_initial_population()
@@ -147,7 +147,7 @@ class RandomFrenetGenerator(BaseFrenetGenerator):
         last_kappa = kappas[-1]
         while k > 0:
             # Randomly add a kappa
-            modified_kappas.append(RandomFrenetGenerator.get_next_kappa(last_kappa))
+            modified_kappas.append(CustomFrenetGenerator.get_next_kappa(last_kappa))
             k -= 1
         return modified_kappas
 
@@ -192,6 +192,11 @@ class RandomFrenetGenerator(BaseFrenetGenerator):
         # Producing randomly generated kappas for the given setting.
         kappas = [0.0] * number_of_points
         for i in range(len(kappas)):
-            kappas[i] = RandomFrenetGenerator.get_next_kappa(kappas[i - 1], kappa_bound, kappa_delta)
+            kappas[i] = CustomFrenetGenerator.get_next_kappa(kappas[i - 1], kappa_bound, kappa_delta)
 
         return kappas
+
+
+class RandomFrenetGenerator(CustomFrenetGenerator):
+    def __init__(self, time_budget=None, executor=None, map_size=None):
+        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size, strict_father=False, random_budget=1.0)
