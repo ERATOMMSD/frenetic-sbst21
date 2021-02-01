@@ -21,7 +21,7 @@ class BaseFrenetGenerator(BaseGenerator):
         # Using the bottom center of the map.
         y0 = self.margin
         x0 = self.map_size / 2
-        ss = np.arange(y0, (len(kappas) + 1) * frenet_step, frenet_step)
+        ss = np.arange(y0, (len(kappas) * frenet_step), frenet_step)
 
         # Transforming the frenet points to cartesian
         (xs, ys) = frenet.frenet_to_cartesian(x0, y0, theta0, ss, kappas)
