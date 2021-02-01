@@ -3,7 +3,6 @@ from time import sleep
 from src.generators.base_generator import BaseGenerator
 
 import logging as log
-import pandas as pd
 
 
 class RandomGenerator(BaseGenerator):
