@@ -1,3 +1,9 @@
+# Other ignore folders
+results/
+
+# VSCode
+.vscode/
+
 # MacOS
 **/.DS_Store
 
