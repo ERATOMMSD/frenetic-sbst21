@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 import logging as log
 import numpy as np
 import pandas as pd
@@ -100,7 +100,7 @@ class BaseGenerator(ABC):
 
         if self.executor.road_visualizer:
             sleep(5)
-        return info['outcome']
+        return info['outcome'], info['min_oob_distance']
 
     @staticmethod
     def accumulated_negative_oob(execution_data):
