@@ -19,9 +19,11 @@ class RandomFrenetGenerator(BaseGenerator):
         self.margin = 10
         # Storing the ancestors of a test that failed to reduce close relatives.
         self.ancestors_of_failed_tests = set()
-        self.ancestors_lookahead = 5
+        self.ancestors_lookahead = 1
         # Only considering tests with a min_oob_distance < threshold for mutation
         # define min_oobd_threshold = 2.0 to remove this feature
+        # TODO: Consider updating this value after the initial population
+        # df[df.outcome != 'INVALID'].min_oob_distance.quantile(0.25)
         self.min_oobd_threshold = -0.5
         super().__init__(time_budget=time_budget, executor=executor, map_size=map_size, strict_father=True)
 
