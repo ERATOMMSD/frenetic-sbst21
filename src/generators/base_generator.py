@@ -94,13 +94,15 @@ class BaseGenerator(ABC):
 
         self.df = self.df.append(info, ignore_index=True)
 
+        min_oob_distance = None
         # Updating dataframe when having new valid tests.
         if info['outcome'] != 'INVALID':
             self.update_data_frame()
+            min_oob_distance = info['min_oob_distance']
 
         if self.executor.road_visualizer:
             sleep(5)
-        return info['outcome'], info['min_oob_distance']
+        return info['outcome'], min_oob_distance
 
     @staticmethod
     def accumulated_negative_oob(execution_data):
