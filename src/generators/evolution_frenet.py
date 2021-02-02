@@ -1,7 +1,7 @@
 import logging as log
 from jmetal.algorithm.singleobjective.evolution_strategy import EvolutionStrategy
 from jmetal.operator import PolynomialMutation
-from src.generators.problems.termination_criteria import StoppingByExecutor
+from jmetal.util.termination_criterion import StoppingByTime
 from src.generators.base_frenet_generator import BaseFrenetGenerator
 from src.generators.problems.road_problem import RoadGeneration
 
@@ -23,7 +23,7 @@ class EvolutionaryFrenetGenerator(BaseFrenetGenerator):
             lambda_=10,
             elitist=True,
             mutation=PolynomialMutation(probability=1.0 / problem.number_of_variables),
-            termination_criterion=StoppingByExecutor(executor=self.executor),
+            termination_criterion=StoppingByTime(max_seconds=self.time_budget),
         )
 
         algorithm.run()

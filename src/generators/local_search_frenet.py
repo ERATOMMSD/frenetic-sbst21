@@ -1,7 +1,7 @@
 import logging as log
 from jmetal.algorithm.singleobjective.local_search import LocalSearch
 from jmetal.operator import PolynomialMutation
-from src.generators.problems.termination_criteria import StoppingByExecutor
+from jmetal.util.termination_criterion import StoppingByTime
 from src.generators.base_frenet_generator import BaseFrenetGenerator
 from src.generators.problems.road_problem import RoadGeneration
 
@@ -20,7 +20,7 @@ class LocalSearchFrenetGenerator(BaseFrenetGenerator):
         algorithm = LocalSearch(
             problem=problem,
             mutation=PolynomialMutation(1.0 / problem.number_of_variables, 20.0),
-            termination_criterion=StoppingByExecutor(executor=self.executor)
+            termination_criterion=StoppingByTime(max_seconds=self.time_budget),
         )
 
         algorithm.run()

@@ -3,7 +3,7 @@ from jmetal.algorithm.singleobjective.genetic_algorithm import GeneticAlgorithm
 from jmetal.operator import BinaryTournamentSelection, PolynomialMutation, SBXCrossover
 from src.generators.base_frenet_generator import BaseFrenetGenerator
 from src.generators.problems.road_problem import RoadGeneration
-from src.generators.problems.termination_criteria import StoppingByExecutor
+from jmetal.util.termination_criterion import StoppingByTime
 
 
 class FreneticGenerator(BaseFrenetGenerator):
@@ -24,7 +24,7 @@ class FreneticGenerator(BaseFrenetGenerator):
             mutation=PolynomialMutation(1.0 / problem.number_of_variables, 20.0),
             crossover=SBXCrossover(0.9, 20.0),
             selection=BinaryTournamentSelection(),
-            termination_criterion=StoppingByExecutor(executor=self.executor)
+            termination_criterion=StoppingByTime(max_seconds=self.time_budget),
         )
 
         algorithm.run()
