@@ -4,8 +4,8 @@ from src.generators.base_frenet_generator import BaseFrenetGenerator
 
 class RoadGeneration(FloatProblem):
 
-    INVALID_SCORE = 10000
-    FAIL_BONUS = 10
+    INVALID_SCORE = 10
+    FAIL_BONUS = 5
 
     def __init__(self, generator: BaseFrenetGenerator, number_of_variables: int = 10, lower_bound: float = -0.07, upper_bound: float = 0.07):
         super(RoadGeneration, self).__init__()
