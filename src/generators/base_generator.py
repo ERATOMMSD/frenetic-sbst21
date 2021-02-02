@@ -63,6 +63,7 @@ class BaseGenerator(ABC):
         for k, v in extra_info.items():
             info[k] = v
 
+        min_oob_distance = None
         # Storing the data in a dataframe for next phase
         if execution_data:
             # base metrics
@@ -92,17 +93,17 @@ class BaseGenerator(ABC):
             last_file = sorted(Path('simulations/beamng_executor').iterdir(), key=os.path.getmtime)[-1]
             info['simulation_file'] = last_file.name
 
+            min_oob_distance = info['min_oob_distance']
+
             # Logging some info for debugging
             log.info('Min oob_distance: {:0.3f}'.format(info['min_oob_distance']))
             log.info('Accumulated negative oob_distance: {:0.3f}'.format(accum_neg_oob))
 
         self.df = self.df.append(info, ignore_index=True)
 
-        min_oob_distance = None
         # Updating dataframe when having new valid tests.
         if info['outcome'] == 'PASS' or info['outcome'] == 'FAIL':
             self.update_data_frame()
-            min_oob_distance = info['min_oob_distance']
 
         if self.executor.road_visualizer:
             sleep(5)
