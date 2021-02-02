@@ -1,6 +1,7 @@
 from src.generators.base_generator import BaseGenerator
 import src.utils.frenet as frenet
 import numpy as np
+import logging as log
 
 
 class BaseFrenetGenerator(BaseGenerator):
