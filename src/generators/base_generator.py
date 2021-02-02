@@ -100,7 +100,7 @@ class BaseGenerator(ABC):
 
         min_oob_distance = None
         # Updating dataframe when having new valid tests.
-        if info['outcome'] != 'INVALID':
+        if info['outcome'] == 'PASS' or info['outcome'] == 'FAIL':
             self.update_data_frame()
             min_oob_distance = info['min_oob_distance']
 
