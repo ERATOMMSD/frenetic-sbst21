@@ -30,13 +30,13 @@ class RoadGeneration(FloatProblem):
 
         outcome, min_oob_distance = self.generator.execute_frenet_test(kappas)
 
-        if outcome != 'INVALID':
+        if min_oob_distance:
+            # min_oob_distance is only defined when the test was executed (PASS or FAIL)
             solution.objectives[0] = min_oob_distance
+            if outcome == 'FAIL':
+                solution.objectives[0] -= RoadGeneration.FAIL_BONUS
         else:
             solution.objectives[0] = RoadGeneration.INVALID_SCORE
-
-        if outcome == 'FAIL':
-            solution.objectives[0] -= RoadGeneration.FAIL_BONUS
 
         return solution
 
