@@ -27,6 +27,10 @@ class BaseGenerator(ABC):
         # min_oob_distance < parent_min_oob_distance
         self.strict_father = strict_father
 
+    @abstractmethod
+    def start(self):
+        pass
+
     def store_dataframe(self):
         log.info("Storing the all the experiment results in a csv.")
         # Storing the results as csv in experiments folders
@@ -59,6 +63,7 @@ class BaseGenerator(ABC):
         for k, v in extra_info.items():
             info[k] = v
 
+        min_oob_distance = None
         # Storing the data in a dataframe for next phase
         if execution_data:
             # base metrics
@@ -88,6 +93,8 @@ class BaseGenerator(ABC):
             last_file = sorted(Path('simulations/beamng_executor').iterdir(), key=os.path.getmtime)[-1]
             info['simulation_file'] = last_file.name
 
+            min_oob_distance = info['min_oob_distance']
+
             # Logging some info for debugging
             log.info('Min oob_distance: {:0.3f}'.format(info['min_oob_distance']))
             log.info('Accumulated negative oob_distance: {:0.3f}'.format(accum_neg_oob))
@@ -95,12 +102,12 @@ class BaseGenerator(ABC):
         self.df = self.df.append(info, ignore_index=True)
 
         # Updating dataframe when having new valid tests.
-        if info['outcome'] != 'INVALID':
+        if info['outcome'] == 'PASS' or info['outcome'] == 'FAIL':
             self.update_data_frame()
 
         if self.executor.road_visualizer:
             sleep(5)
-        return info['outcome']
+        return info['outcome'], min_oob_distance
 
     @staticmethod
     def accumulated_negative_oob(execution_data):

@@ -1,29 +1,30 @@
 import numpy as np
 import logging as log
-import src.utils.frenet as frenet
 import random
 from time import sleep
-from src.generators.base_generator import BaseGenerator
+from src.generators.base_frenet_generator import BaseFrenetGenerator
 
 
-class RandomFrenetGenerator(BaseGenerator):
+class CustomFrenetGenerator(BaseFrenetGenerator):
     """
         Generates tests using the frenet framework to determine curvatures.
     """
 
-    def __init__(self, time_budget=None, executor=None, map_size=None):
+    def __init__(self, time_budget=None, executor=None, map_size=None, strict_father=True, random_budget=0.2):
         # Spending 20% of the time on random generation
         # Set this value to 1.0 to generate fully random results.
-        self.random_gen_budget = 0.2
+        self.random_gen_budget = random_budget
         # Margin size w.r.t the map
         self.margin = 10
         # Storing the ancestors of a test that failed to reduce close relatives.
         self.ancestors_of_failed_tests = set()
-        self.ancestors_lookahead = 5
+        self.ancestors_lookahead = 1
         # Only considering tests with a min_oob_distance < threshold for mutation
         # define min_oobd_threshold = 2.0 to remove this feature
+        # TODO: Consider updating this value after the initial population
+        # df[df.outcome != 'INVALID'].min_oob_distance.quantile(0.25)
         self.min_oobd_threshold = -0.5
-        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size, strict_father=True)
+        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size, strict_father=strict_father)
 
     def start(self):
         self.generate_initial_population()
@@ -124,7 +125,7 @@ class RandomFrenetGenerator(BaseGenerator):
                                                                                               parent.accum_neg_oob.item(),
                                                                                               parent.min_oob_distance.item()))
                 m_kappas = function(kappas)
-                outcome = self.execute_frenet_test(m_kappas, method=name, parent_info=parent_info, extra_info=extra_info)
+                outcome, _ = self.execute_frenet_test(m_kappas, method=name, parent_info=parent_info, extra_info=extra_info)
 
                 # When there is a mutant of this branch that fails, we stop mutating this branch.
                 if outcome == 'FAIL':
@@ -146,7 +147,7 @@ class RandomFrenetGenerator(BaseGenerator):
         last_kappa = kappas[-1]
         while k > 0:
             # Randomly add a kappa
-            modified_kappas.append(RandomFrenetGenerator.get_next_kappa(last_kappa))
+            modified_kappas.append(CustomFrenetGenerator.get_next_kappa(last_kappa))
             k -= 1
         return modified_kappas
 
@@ -173,33 +174,6 @@ class RandomFrenetGenerator(BaseGenerator):
             modified_kappas[i] += random.choice(np.linspace(-0.05, 0.05))
         return modified_kappas
 
-    def execute_frenet_test(self, kappas, method='random', parent_info={}, extra_info={}, avoid_weaker=False):
-        extra_info['kappas'] = kappas
-        road_points = self.kappas_to_road_points(kappas)
-        if road_points:
-            return self.execute_test(road_points, method=method, parent_info=parent_info, extra_info=extra_info)
-        else:
-            return 'CANNOT_REFRAME'
-
-    def kappas_to_road_points(self, kappas, frenet_step=10, theta0=1.57):
-        """
-        Args:
-            kappas: list of kappa values
-            frenet_step: The distance between to points.
-            theta0: The initial angle of the line. (1.57 == 90 degrees)
-        Returns:
-            road points in cartesian coordinates
-        """
-        # Using the bottom center of the map.
-        y0 = self.margin
-        x0 = self.map_size / 2
-        ss = np.arange(y0, (len(kappas) + 1) * frenet_step, frenet_step)
-
-        # Transforming the frenet points to cartesian
-        (xs, ys) = frenet.frenet_to_cartesian(x0, y0, theta0, ss, kappas)
-        road_points = self.reframe_road(xs, ys)
-        return road_points
-
     def generate_random_test(self, frenet_step=10, kappa_delta=0.05, kappa_bound=0.07):
         """ Generates a test using frenet framework to determine the curvature of the points.
          Currently using an initial setup similar to the GUI.
@@ -218,26 +192,11 @@ class RandomFrenetGenerator(BaseGenerator):
         # Producing randomly generated kappas for the given setting.
         kappas = [0.0] * number_of_points
         for i in range(len(kappas)):
-            kappas[i] = RandomFrenetGenerator.get_next_kappa(kappas[i - 1], kappa_bound, kappa_delta)
+            kappas[i] = CustomFrenetGenerator.get_next_kappa(kappas[i - 1], kappa_bound, kappa_delta)
 
         return kappas
 
-    def reframe_road(self, xs, ys):
-        """
-        Args:
-            xs: cartesian x coordinates
-            ys: cartesian y coordinates
-        Returns:
-            A representation of the road that fits the map size (when possible).
-        """
-        min_xs = min(xs)
-        min_ys = min(ys)
-        road_width = 10  # TODO: How to get the exact road width?
-        if (max(xs) - min_xs + road_width > self.map_size - self.margin) \
-                or (max(ys) - min_ys + road_width > self.map_size - self.margin):
-            log.info("Skip: Road won't fit")
-            return None
-            # TODO: Fail the entire test and start over
-        xs = list(map(lambda x: x - min_xs + road_width, xs))
-        ys = list(map(lambda y: y - min_ys + road_width, ys))
-        return list(zip(xs, ys))
+
+class RandomFrenetGenerator(CustomFrenetGenerator):
+    def __init__(self, time_budget=None, executor=None, map_size=None):
+        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size, strict_father=False, random_budget=1.0)
