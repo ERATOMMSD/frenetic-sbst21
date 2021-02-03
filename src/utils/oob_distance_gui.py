@@ -58,7 +58,7 @@ class OobDistancesFigure:
         self.update_callback(kappas)
 
     def __init__(self, master, map_size, nof_points, update_callback, weights_json_filepath, biases_json_filepath):
-        # self.nn_model = nn.get_model('../../rd/19/80-30-110.trained.weights.json', '../../rd/19/80-30-110.trained.biases.json')
+        # self.nn_model = nn.get_model('../../rd/19/80-30-110.trained-on-600.weights.json', '../../rd/19/80-30-110.trained-on-600.biases.json')
         self.nn_model = nn.get_model(weights_json_filepath, biases_json_filepath)
         self.map_size = map_size
         self.nof_points = nof_points
@@ -105,13 +105,13 @@ class OobDistangeGUI:
         self.weights_json_filepath_label = tk.Label(master=self.top_top_frame, text='NN weights json file:')
         self.weights_json_filepath_label.pack(side=tk.LEFT)
         self.weights_json_filepath_entry = tk.Entry(master=self.top_top_frame)
-        self.weights_json_filepath_entry.insert(0, '../../rd/19/80-30-110.trained.weights.json')
+        self.weights_json_filepath_entry.insert(0, '../../rd/19/80-30-110.trained-on-600.weights.json')
         self.weights_json_filepath_entry.pack(fill=tk.X, expand=1, side=tk.LEFT)
 
         self.biases_json_filepath_label = tk.Label(master=self.top_top_frame, text='NN biases json file:')
         self.biases_json_filepath_label.pack(side=tk.LEFT)
         self.biases_json_filepath_entry = tk.Entry(master=self.top_top_frame)
-        self.biases_json_filepath_entry.insert(0, '../../rd/19/80-30-110.trained.biases.json')
+        self.biases_json_filepath_entry.insert(0, '../../rd/19/80-30-110.trained-on-600.biases.json')
         self.biases_json_filepath_entry.pack(fill=tk.X, expand=1, side=tk.LEFT)
 
         self.top_frame = tk.Frame(master=self.window)

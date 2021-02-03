@@ -28,7 +28,7 @@ def oob_distances_to_kappas(model, oob_distances):
     return model.predict(np.array([oob_distances]))[0]
 
 if __name__ == "__main__":
-    model = get_model("./80-30-110.trained.weights.json", "./80-30-110.trained.biases.json")
+    model = get_model("./80-30-110.trained-on-600.weights.json", "./80-30-110.trained-on-600.biases.json")
     print(model.predict(np.array([[1.99506, 1.35371, 0.450784, 1.40095, 1.66572, 1.55706, 1.48581, 1.37367, 1.25288, 1.98962, 1.49743, 1.0522, 0.197334, 1.18767, 0.792962, 1.37871, 1.57626, 1.45412, 1.55921]])))
     # we should get 0.0169863, 0.0320919, 0.0519882, 0.0351862, 0.0257261, 0.0426494, 0.0202672, 0.0256207, 0.0166942, 0.0220529, 0.0413528, 0.0399505, 0.056026, 0.0530632, 0.0462601, 0.0365292, 0.0474662, 0.0335889, 0.0570663
 
