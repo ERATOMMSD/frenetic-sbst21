@@ -78,13 +78,11 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
             self.mutate_passed_test(parent, parent_info)
 
     def mutate_passed_test(self, parent, parent_info):
-        # TODO: Implement more interesting and smarter mutations such as adding a kappa, modifying paths, etc.
         kappa_mutations = [('add 1 to 5 kappas at the end', self.add_kappas),
                            ('randomly remove 1 to 5 kappas', self.randomly_remove_kappas),
                            ('remove 1 to 5 kappas from front', lambda ks: ks[random.randint(1, 5):]),
                            ('remove 1 to 5 kappas from tail', lambda ks: ks[:-random.randint(1, 5)]),
-                           ('increase kappas 10~50%',
-                            lambda ks: list(map(lambda x: x * random.randint(11, 15) / 10, ks))),
+                           ('increase kappas 10~50%', self.increase_kappas),
                            ('randomly modify 1 to 5 kappas', self.random_modification)]
 
         self.perform_kappa_mutations(kappa_mutations, parent, parent_info)
@@ -92,7 +90,7 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
     def mutate_failed_test(self, parent, parent_info):
         # Only reversing roads that produced a failure already
         # Mutations to the road
-        # TODO: Is it possible to obtain the kappas given cartesians?
+        # TODO: Obtain the kappa values given the cartesians.
         road_points = parent.road.item()
         # Execute reversed original test
         log.info('Mutation function: {:s}'.format('reverse road'))
@@ -104,7 +102,7 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
                           extra_info={'visited': True},
                           parent_info=parent_info)
 
-        # reversible mutations that we may want to avoid in tests that passed because they are easily reversible
+        # mutations that we may want to avoid in tests that passed because they are easily reversible
         kappa_mutations = [('reverse kappas', lambda ks: ks[::-1]),
                            ('split and swap kappas', lambda ks: ks[int(len(ks) / 2):] + ks[:int(len(ks) / 2)]),
                            ('flip sign kappas', lambda ks: list(map(lambda x: x * -1.0, ks)))]
@@ -138,6 +136,11 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
     def get_next_kappa(last_kappa, kappa_bound=0.05, kappa_delta=0.07):
         return random.choice(np.linspace(max(-kappa_bound, last_kappa - kappa_delta),
                                          min(kappa_bound, last_kappa + kappa_delta)))
+
+    @staticmethod
+    def increase_kappas(kappas):
+        m = random.randint(11, 15) / 10
+        return list(map(lambda x: x * m, kappas))
 
     @staticmethod
     def add_kappas(kappas):
