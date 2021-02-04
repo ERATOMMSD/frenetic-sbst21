@@ -18,10 +18,13 @@ class NSGAIIFrenetGenerator(BaseFrenetGenerator):
         problem = RoadGeneration(self, number_of_points)
         log.info("Starting test generation")
 
+        # population size is 10 per hour
+        population_size = max(int(self.time_budget / 3600) * 10, 10)
+
         algorithm = NSGAII(
             problem=problem,
-            population_size=100,
-            offspring_population_size=100,
+            population_size=population_size,
+            offspring_population_size=population_size,
             mutation=PolynomialMutation(probability=1.0 / problem.number_of_variables, distribution_index=20.0),
             crossover=SBXCrossover(probability=0.9, distribution_index=20.0),
             termination_criterion=StoppingByTime(max_seconds=self.time_budget),
