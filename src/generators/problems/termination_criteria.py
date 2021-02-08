@@ -15,4 +15,4 @@ class StoppingByExecutor(TerminationCriterion):
     @property
     def is_met(self):
         log.info(f'Remaining time {self.executor.get_remaining_time()}')
-        return self.executor.get_remaining_time() <= 0
+        return self.executor.get_remaining_time() <= 50
