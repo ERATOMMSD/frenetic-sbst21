@@ -5,7 +5,7 @@ import logging as log
 
 
 class BaseFrenetGenerator(BaseGenerator):
-    def __init__(self, time_budget=None, executor=None, map_size=None, margin=0, strict_father=False):
+    def __init__(self, time_budget=None, executor=None, map_size=None, margin=10, strict_father=False):
         # Margin size w.r.t the map
         self.margin = margin
         super().__init__(time_budget=time_budget, executor=executor, map_size=map_size, strict_father=strict_father)
@@ -47,7 +47,7 @@ class BaseFrenetGenerator(BaseGenerator):
         """
         min_xs = min(xs)
         min_ys = min(ys)
-        road_width = 10  # TODO: How to get the exact road width?
+        road_width = self.margin  # TODO: How to get the exact road width?
         if (max(xs) - min_xs + road_width > self.map_size - self.margin) \
                 or (max(ys) - min_ys + road_width > self.map_size - self.margin):
             log.info("Skip: Road won't fit")
