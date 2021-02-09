@@ -20,7 +20,7 @@ class SingleKappaMutation(Mutation[FloatSolution]):
             if rand <= self.probability:
                 y = solution.variables[i]
                 mult_rand = random.random()
-                if mult_rand < self.multiply_probabiliy:
+                if mult_rand < self.multiply_probability:
                     solution.variables[i] = self.multiply_kappa(y)
                 else:
                     solution.variables[i] = self.flip_sign(y)
