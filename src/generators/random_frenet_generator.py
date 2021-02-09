@@ -10,7 +10,7 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
         Generates tests using the frenet framework to determine curvatures.
     """
 
-    def __init__(self, time_budget=None, executor=None, map_size=None, strict_father=True, random_budget=0.2):
+    def __init__(self, time_budget=None, executor=None, map_size=None, kill_ancestors=1, strict_father=True, random_budget=0.2):
         # Spending 20% of the time on random generation
         # Set this value to 1.0 to generate fully random results.
         self.random_gen_budget = random_budget
@@ -18,7 +18,7 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
         self.margin = 10
         # Storing the ancestors of a test that failed to reduce close relatives.
         self.ancestors_of_failed_tests = set()
-        self.ancestors_lookahead = 1
+        self.kill_ancestors = kill_ancestors
         # Only considering tests with a min_oob_distance < threshold for mutation
         # define min_oobd_threshold = 2.0 to remove this feature
         # TODO: Consider updating this value after the initial population
@@ -68,10 +68,11 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
                        'parent_min_oob_distance': parent.min_oob_distance.item(),
                        'generation': parent.generation.item() + 1,
                        'ancestors': ancestors}
-        # Looking to close relatives to avoid too similar tests
-        for ancestor_id in ancestors[-self.ancestors_lookahead:]:
-            if ancestor_id in self.ancestors_of_failed_tests:
-                return
+        if self.kill_ancestors > 0:
+            # Looking to close relatives to avoid too similar tests
+            for ancestor_id in ancestors[-self.kill_ancestors:]:
+                if ancestor_id in self.ancestors_of_failed_tests:
+                    return
         # Applying different mutations depending on the outcome
         if parent.outcome.item() == 'FAIL':
             self.mutate_failed_test(parent, parent_info)
@@ -127,8 +128,8 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
                 outcome, _ = self.execute_frenet_test(m_kappas, method=name, parent_info=parent_info, extra_info=extra_info)
 
                 # When there is a mutant of this branch that fails, we stop mutating this branch.
-                if outcome == 'FAIL':
-                    for ancestor_id in parent_info['ancestors'][-self.ancestors_lookahead:]:
+                if outcome == 'FAIL' and self.kill_ancestors > 0:
+                    for ancestor_id in parent_info['ancestors'][-self.kill_ancestors:]:
                         self.ancestors_of_failed_tests.add(ancestor_id)
                     break
                 i += 1
@@ -203,4 +204,53 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
 
 class RandomFrenetGenerator(CustomFrenetGenerator):
     def __init__(self, time_budget=None, executor=None, map_size=None):
-        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size, strict_father=False, random_budget=1.0)
+        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
+                         kill_ancestors=0, strict_father=False, random_budget=1.0)
+
+
+class Frenet20(CustomFrenetGenerator):
+    def __init__(self, time_budget=None, executor=None, map_size=None):
+        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
+                         kill_ancestors=0, strict_father=False, random_budget=0.2)
+
+
+class Frenet20Kill(CustomFrenetGenerator):
+    def __init__(self, time_budget=None, executor=None, map_size=None):
+        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
+                         kill_ancestors=1, strict_father=False, random_budget=0.2)
+
+
+class Frenet20KillStrict(CustomFrenetGenerator):
+    def __init__(self, time_budget=None, executor=None, map_size=None):
+        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
+                         kill_ancestors=1, strict_father=True, random_budget=0.2)
+
+
+class Frenet20Strict(CustomFrenetGenerator):
+    def __init__(self, time_budget=None, executor=None, map_size=None):
+        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
+                         kill_ancestors=0, strict_father=True, random_budget=0.2)
+
+
+class Frenet10(CustomFrenetGenerator):
+    def __init__(self, time_budget=None, executor=None, map_size=None):
+        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
+                         kill_ancestors=0, strict_father=False, random_budget=0.1)
+
+
+class Frenet10Kill(CustomFrenetGenerator):
+    def __init__(self, time_budget=None, executor=None, map_size=None):
+        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
+                         kill_ancestors=1, strict_father=False, random_budget=0.1)
+
+
+class Frenet10KillStrict(CustomFrenetGenerator):
+    def __init__(self, time_budget=None, executor=None, map_size=None):
+        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
+                         kill_ancestors=1, strict_father=True, random_budget=0.1)
+
+
+class Frenet10Strict(CustomFrenetGenerator):
+    def __init__(self, time_budget=None, executor=None, map_size=None):
+        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
+                         kill_ancestors=0, strict_father=True, random_budget=0.1)
