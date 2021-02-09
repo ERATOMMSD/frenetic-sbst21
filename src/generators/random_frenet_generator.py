@@ -46,7 +46,7 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
                 # TODO: Not sure why visited initially has 1.0 even though it is always defined as True or False.
                 log.info('Converting visited column to boolean...')
                 self.df['visited'] = self.df['visited'].map(lambda x: True if x == 1.0 else False)
-            parent = self.df[(self.df.outcome != 'INVALID') & (~self.df.visited) & (self.df.min_oob_distance < self.min_oobd_threshold)].sort_values('min_oob_distance', ascending=True).head(1)
+            parent = self.df[((self.df.outcome == 'PASS') | (self.df.outcome == 'FAIL')) & (~self.df.visited) & (self.df.min_oob_distance < self.min_oobd_threshold)].sort_values('min_oob_distance', ascending=True).head(1)
             if len(parent):
                 self.df.at[parent.index, 'visited'] = True
                 self.mutate_test(parent)
@@ -55,6 +55,7 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
                 log.info('There is no good candidate for mutation.')
                 kappas = self.generate_random_test()
                 self.execute_frenet_test(kappas)
+                self.min_oobd_threshold = max(-0.5, self.df[(self.df.outcome == 'PASS') | (self.df.outcome == 'FAIL')].min_oob_distance.quantile(0.25))
 
     def mutate_test(self, parent):
         # Parent info to be added to the dataframe
@@ -82,7 +83,7 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
                            ('randomly remove 1 to 5 kappas', self.randomly_remove_kappas),
                            ('remove 1 to 5 kappas from front', lambda ks: ks[random.randint(1, 5):]),
                            ('remove 1 to 5 kappas from tail', lambda ks: ks[:-random.randint(1, 5)]),
-                           ('increase kappas 10~50%', self.increase_kappas),
+                           ('increase all kappas 10~20%', self.increase_kappas),
                            ('randomly modify 1 to 5 kappas', self.random_modification)]
 
         self.perform_kappa_mutations(kappa_mutations, parent, parent_info)
@@ -139,7 +140,7 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
 
     @staticmethod
     def increase_kappas(kappas):
-        m = random.randint(11, 15) / 10
+        m = 10 + random.randint(50, 200)/100
         return list(map(lambda x: x * m, kappas))
 
     @staticmethod
