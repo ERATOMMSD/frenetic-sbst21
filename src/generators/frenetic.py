@@ -88,3 +88,17 @@ class FreneticGeneratorKappaSBX50(FreneticGenerator):
         super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
                          population_size=50, offspring_size=50, mutation=SingleKappaMutation,
                          crossover=SBXCrossover(0.9, 20.0))
+
+
+class FreneticGeneratorKappaNull20(FreneticGenerator):
+    def __init__(self, time_budget=None, executor=None, map_size=None):
+        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
+                         population_size=20, offspring_size=20, mutation=SingleKappaMutation,
+                         crossover=NullCrossover())
+
+
+class FreneticGeneratorKappaNull50(FreneticGenerator):
+    def __init__(self, time_budget=None, executor=None, map_size=None):
+        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
+                         population_size=50, offspring_size=50, mutation=SingleKappaMutation,
+                         crossover=NullCrossover())
