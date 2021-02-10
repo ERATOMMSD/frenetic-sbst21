@@ -60,7 +60,6 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
                 log.info('There is no good candidate for mutation.')
                 kappas = self.generate_random_test()
                 self.execute_frenet_test(kappas)
-                self.min_oobd_threshold = max(-0.5, self.df[(self.df.outcome == 'PASS') | (self.df.outcome == 'FAIL')].min_oob_distance.quantile(0.25))
             if 0 < self.crossover_frequency <= self.recent_count:
                 self.crossover()
                 self.recent_count = 0
