@@ -37,14 +37,6 @@ class BaseGenerator(ABC):
         with open(self.file_name, 'w') as outfile:
             self.df.to_csv(outfile)
 
-    def update_data_frame(self):
-        if self.columns_number < len(self.df.columns):
-            self.store_dataframe()
-            self.columns_number = len(self.df.columns)
-        else:
-            log.info('Appending data to the experiments results to a csv.')
-            self.df.to_csv(self.file_name, mode='a', header=True)
-
     def execute_test(self, road_points, method='random', extra_info={}, parent_info={}):
         # Some more debugging
         log.info("Generated test using: %s", road_points)
@@ -103,7 +95,7 @@ class BaseGenerator(ABC):
 
         # Updating dataframe when having new valid tests.
         if info['outcome'] == 'PASS' or info['outcome'] == 'FAIL':
-            self.update_data_frame()
+            self.store_dataframe()
 
         if self.executor.road_visualizer:
             sleep(5)
