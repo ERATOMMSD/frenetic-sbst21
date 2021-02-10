@@ -125,8 +125,8 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
                     self.df.min_oob_distance < self.min_oobd_threshold)].sort_values('min_oob_distance', ascending=True).head(self.crossover_candidates)
 
         if candidates and len(candidates) > 4:
-            i = 0
-            while self.executor.get_remaining_time() > 0 and i < int(len(candidates)/2):
+            kids_count = 0
+            while self.executor.get_remaining_time() > 0 and kids_count < len(candidates):
                 his_id, her_id = random.sample(list(candidates.index), 2)
                 father = self.df.iloc[his_id]['kappas']
                 mother = self.df.iloc[her_id]['kappas']
@@ -138,7 +138,9 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
                     name = 'single point crossover'
                 while self.executor.get_remaining_time() > 0 and len(kids) > 0:
                     kappas = kids.pop()
+                    kids_count += 1
                     self.execute_frenet_test(kappas, method=name, parent_info={}, extra_info={})
+
 
     @staticmethod
     def chromosome_crossover(him, her):
