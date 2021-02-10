@@ -10,7 +10,8 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
         Generates tests using the frenet framework to determine curvatures.
     """
 
-    def __init__(self, time_budget=None, executor=None, map_size=None, kill_ancestors=1, strict_father=True, random_budget=0.2):
+    def __init__(self, time_budget=None, executor=None, map_size=None, kill_ancestors=1, strict_father=True,
+                 random_budget=0.2, crossover_candidates=20, crossover_frequency=0):
         # Spending 20% of the time on random generation
         # Set this value to 1.0 to generate fully random results.
         self.random_gen_budget = random_budget
@@ -24,6 +25,9 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
         # TODO: Consider updating this value after the initial population
         # df[df.outcome != 'INVALID'].min_oob_distance.quantile(0.25)
         self.min_oobd_threshold = -0.5
+        # Set crossover frequency to 0 for no crossover
+        self.crossover_candidates = crossover_candidates
+        self.crossover_frequency = crossover_frequency
         super().__init__(time_budget=time_budget, executor=executor, map_size=map_size, strict_father=strict_father)
 
     def start(self):
@@ -41,6 +45,7 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
 
     def generate_mutants(self):
         # Iterating the tests according to the value of the min_oob_distance (closer to fail).
+        self.recent_count = 0
         while self.executor.get_remaining_time() > 0:
             if 0.0 in set(self.df['visited']) or 1.0 in set(self.df['visited']):
                 # TODO: Not sure why visited initially has 1.0 even though it is always defined as True or False.
@@ -56,6 +61,9 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
                 kappas = self.generate_random_test()
                 self.execute_frenet_test(kappas)
                 self.min_oobd_threshold = max(-0.5, self.df[(self.df.outcome == 'PASS') | (self.df.outcome == 'FAIL')].min_oob_distance.quantile(0.25))
+            if 0 < self.crossover_frequency <= self.recent_count:
+                self.crossover()
+                self.recent_count = 0
 
     def mutate_test(self, parent):
         # Parent info to be added to the dataframe
@@ -110,6 +118,53 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
                            ('flip sign kappas', lambda ks: list(map(lambda x: x * -1.0, ks)))]
 
         self.perform_kappa_mutations(kappa_mutations, parent, parent_info, extra_info={'visited': True})
+
+    def crossover(self):
+        # TODO: Add parent information
+        candidates = self.df[((self.df.outcome == 'PASS') | (self.df.outcome == 'FAIL')) & (~self.df.kappas.isna()) & (
+                    self.df.min_oob_distance < self.min_oobd_threshold)].sort_values('min_oob_distance', ascending=True).head(self.crossover_candidates)
+
+        if candidates and len(candidates) > 4:
+            i = 0
+            while self.executor.get_remaining_time() > 0 and i < int(len(candidates)/2):
+                his_id, her_id = random.sample(list(candidates.index), 2)
+                father = self.df.iloc[his_id]['kappas']
+                mother = self.df.iloc[her_id]['kappas']
+                if random.random() < 0.5:
+                    kids = self.chromosome_crossover(father, mother)
+                    name = 'chromosome crossover'
+                else:
+                    kids = self.single_point_crossover(father, mother)
+                    name = 'single point crossover'
+                while self.executor.get_remaining_time() > 0 and len(kids) > 0:
+                    kappas = kids.pop()
+                    self.execute_frenet_test(kappas, method=name, parent_info={}, extra_info={})
+
+    @staticmethod
+    def chromosome_crossover(him, her):
+        """
+            him: list of kappas
+            her: list of kappas
+            returns: a list of kappas of the length of the shortest list
+        """
+        son = []
+        for i in range(min(len(him), len(her))):
+            if random.random() < 0.5:
+                son.append(him[i])
+            else:
+                son.append(her[i])
+        return [son]
+
+    @staticmethod
+    def single_point_crossover(him, her):
+        """
+            him: list of kappas
+            her: list of kappas
+            returns: Two lists of kappas
+        """
+        son = him[int(len(him)/2):] + her[:int(len(her)/2)]
+        daughter = her[int(len(her)/2):] + him[:int(len(him)/2)]
+        return [son, daughter]
 
     def perform_kappa_mutations(self, kappa_mutations, parent, parent_info, extra_info={}):
         # Only considering paths with more than 10 kappa points for mutations
@@ -254,3 +309,9 @@ class Frenet10Strict(CustomFrenetGenerator):
     def __init__(self, time_budget=None, executor=None, map_size=None):
         super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
                          kill_ancestors=0, strict_father=True, random_budget=0.1)
+
+class Frenet10KillStrictCross10F20(CustomFrenetGenerator):
+    def __init__(self, time_budget=None, executor=None, map_size=None):
+        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
+                         kill_ancestors=1, strict_father=True, random_budget=0.1,
+                         crossover_candidates=10, crossover_frequency=20)

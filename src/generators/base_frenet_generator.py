@@ -8,6 +8,7 @@ class BaseFrenetGenerator(BaseGenerator):
     def __init__(self, time_budget=None, executor=None, map_size=None, margin=10, strict_father=False):
         # Margin size w.r.t the map
         self.margin = margin
+        self.recent_count = 0
         super().__init__(time_budget=time_budget, executor=executor, map_size=map_size, strict_father=strict_father)
 
     def kappas_to_road_points(self, kappas, frenet_step=10, theta0=1.57):
@@ -33,6 +34,7 @@ class BaseFrenetGenerator(BaseGenerator):
         extra_info['kappas'] = kappas
         road_points = self.kappas_to_road_points(kappas)
         if road_points:
+            self.recent_count += 1
             return self.execute_test(road_points, method=method, parent_info=parent_info, extra_info=extra_info)
         else:
             return 'CANNOT_REFRAME', None
