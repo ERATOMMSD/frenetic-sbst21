@@ -192,7 +192,7 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
             a list of kappa values and its cartesian representation.
         """
         # Number of generated kappa points depends on the size of the map + random variation
-        number_of_points = int(self.map_size / frenet_step) + random.randint(-5, 15)
+        number_of_points = int(self.map_size / frenet_step) + random.randint(-5, 5)
 
         # Producing randomly generated kappas for the given setting.
         kappas = [0.0] * number_of_points
