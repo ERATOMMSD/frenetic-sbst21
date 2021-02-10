@@ -311,8 +311,16 @@ class Frenet10Strict(CustomFrenetGenerator):
         super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
                          kill_ancestors=0, strict_father=True, random_budget=0.1)
 
-class Frenet10KillStrictCross10F20(CustomFrenetGenerator):
+
+class Frenet10StrictCross20F40(CustomFrenetGenerator):
     def __init__(self, time_budget=None, executor=None, map_size=None):
         super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
-                         kill_ancestors=1, strict_father=True, random_budget=0.1,
-                         crossover_candidates=10, crossover_frequency=20)
+                         kill_ancestors=0, strict_father=True, random_budget=0.1,
+                         crossover_candidates=20, crossover_frequency=40)
+
+
+class Frenet10Cross20F40(CustomFrenetGenerator):
+    def __init__(self, time_budget=None, executor=None, map_size=None):
+        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
+                         kill_ancestors=0, strict_father=False, random_budget=0.1,
+                         crossover_candidates=20, crossover_frequency=40)
