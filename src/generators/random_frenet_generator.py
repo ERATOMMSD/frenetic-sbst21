@@ -124,7 +124,7 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
         candidates = self.df[((self.df.outcome == 'PASS') | (self.df.outcome == 'FAIL')) & (~self.df.kappas.isna()) & (
                     self.df.min_oob_distance < self.min_oobd_threshold)].sort_values('min_oob_distance', ascending=True).head(self.crossover_candidates)
 
-        if candidates and len(candidates) > 4:
+        if len(candidates) > 4:
             kids_count = 0
             while self.executor.get_remaining_time() > 0 and kids_count < len(candidates):
                 his_id, her_id = random.sample(list(candidates.index), 2)
