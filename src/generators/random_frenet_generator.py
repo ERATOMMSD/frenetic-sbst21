@@ -141,7 +141,7 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
 
     @staticmethod
     def increase_kappas(kappas):
-        m = 10 + random.randint(50, 200)/100
+        m = 1.1 + 0.1*random.random()
         return list(map(lambda x: x * m, kappas))
 
     @staticmethod
