@@ -11,7 +11,7 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
     """
 
     def __init__(self, time_budget=None, executor=None, map_size=None, kill_ancestors=1, strict_father=True,
-                 random_budget=0.2, crossover_candidates=20, crossover_frequency=0):
+                 random_budget=0.2, crossover_candidates=20, crossover_frequency=0, fix_points=False):
         # Spending 20% of the time on random generation
         # Set this value to 1.0 to generate fully random results.
         self.random_gen_budget = random_budget
@@ -28,6 +28,17 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
         # Set crossover frequency to 0 for no crossover
         self.crossover_candidates = crossover_candidates
         self.crossover_frequency = crossover_frequency
+        # Fix numbrt of points policy
+        if fix_points:
+            #Fix Points
+            self.number_of_points = 20
+            self.frenet_step = int(map_size/self.number_of_points)
+        else:
+            # Fix Distance
+            # Number of generated kappa points depends on the size of the map + random variation
+            self.frenet_step = 10
+            self.number_of_points = int(self.map_size / self.frenet_step)
+
         super().__init__(time_budget=time_budget, executor=executor, map_size=map_size, strict_father=strict_father)
 
     def start(self):
@@ -40,7 +51,7 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
         while self.executor.get_remaining_time() > self.time_budget * (1.0 - self.random_gen_budget):
             log.info("Random generation. Remaining time %s", self.executor.get_remaining_time())
             kappas = self.generate_random_test()
-            self.execute_frenet_test(kappas)
+            self.execute_frenet_test(kappas, frenet_step=self.frenet_step)
         return
 
     def generate_mutants(self):
@@ -59,7 +70,7 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
                 # If there is no good parent try random generation
                 log.info('There is no good candidate for mutation.')
                 kappas = self.generate_random_test()
-                self.execute_frenet_test(kappas)
+                self.execute_frenet_test(kappas, frenet_step=self.frenet_step)
             if 0 < self.crossover_frequency <= self.recent_count:
                 self.crossover()
                 self.recent_count = 0
@@ -138,7 +149,7 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
                 while self.executor.get_remaining_time() > 0 and len(kids) > 0:
                     kappas = kids.pop()
                     kids_count += 1
-                    self.execute_frenet_test(kappas, method=name, parent_info={}, extra_info={})
+                    self.execute_frenet_test(kappas, method=name, frenet_step=self.frenet_step, parent_info={}, extra_info={})
 
 
     @staticmethod
@@ -181,7 +192,7 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
                                                                                               parent.accum_neg_oob.item(),
                                                                                               parent.min_oob_distance.item()))
                 m_kappas = function(kappas)
-                outcome, _ = self.execute_frenet_test(m_kappas, method=name, parent_info=parent_info, extra_info=extra_info)
+                outcome, _ = self.execute_frenet_test(m_kappas, frenet_step=self.frenet_step, method=name, parent_info=parent_info, extra_info=extra_info)
 
                 # When there is a mutant of this branch that fails, we stop mutating this branch.
                 if outcome == 'FAIL' and self.kill_ancestors > 0:
@@ -235,7 +246,7 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
             modified_kappas[i] += random.choice(np.linspace(-0.05, 0.05))
         return modified_kappas
 
-    def generate_random_test(self, frenet_step=10, kappa_delta=0.05, kappa_bound=0.07):
+    def generate_random_test(self, kappa_delta=0.05, kappa_bound=0.07):
         """ Generates a test using frenet framework to determine the curvature of the points.
          Currently using an initial setup similar to the GUI.
          TODO: Make the frenet setup part of the experiment to adapt w.r.t. the output of the tests.
@@ -247,11 +258,9 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
         Returns:
             a list of kappa values and its cartesian representation.
         """
-        # Number of generated kappa points depends on the size of the map + random variation
-        number_of_points = int(self.map_size / frenet_step) + random.randint(-5, 5)
-
+        points = self.number_of_points + random.randint(-5, 5)
         # Producing randomly generated kappas for the given setting.
-        kappas = [0.0] * number_of_points
+        kappas = [0.0] * points
         for i in range(len(kappas)):
             kappas[i] = CustomFrenetGenerator.get_next_kappa(kappas[i - 1], kappa_bound, kappa_delta)
 
@@ -324,3 +333,10 @@ class Frenet10Cross20F40(CustomFrenetGenerator):
         super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
                          kill_ancestors=0, strict_father=False, random_budget=0.1,
                          crossover_candidates=20, crossover_frequency=40)
+
+
+class Frenet10FixPoints(CustomFrenetGenerator):
+    def __init__(self, time_budget=None, executor=None, map_size=None):
+        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
+                         kill_ancestors=0, strict_father=False, random_budget=0.1, fix_points=True)
+
