@@ -37,7 +37,7 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
             # Fix Distance
             # Number of generated kappa points depends on the size of the map + random variation
             self.frenet_step = 10
-            self.number_of_points = int(self.map_size / self.frenet_step)
+            self.number_of_points = int(map_size / self.frenet_step)
 
         super().__init__(time_budget=time_budget, executor=executor, map_size=map_size, strict_father=strict_father)
 
