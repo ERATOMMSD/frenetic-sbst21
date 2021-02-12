@@ -44,7 +44,6 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
     def start(self):
         self.generate_initial_population()
         self.generate_mutants()
-        self.store_dataframe()
         sleep(10)
 
     def generate_initial_population(self):

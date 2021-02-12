@@ -93,10 +93,6 @@ class BaseGenerator(ABC):
 
         self.df = self.df.append(info, ignore_index=True)
 
-        # Updating dataframe when having new valid tests.
-        if info['outcome'] == 'PASS' or info['outcome'] == 'FAIL':
-            self.store_dataframe()
-
         if self.executor.road_visualizer:
             sleep(5)
         return info['outcome'], min_oob_distance
