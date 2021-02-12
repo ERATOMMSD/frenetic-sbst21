@@ -20,7 +20,7 @@ timeout /t 10
 git clone https://github.com/ERATOMMSD/sbst-results.git ..\sbst-results
 
 mkdir ..\sbst-results\%1_%4_%3\
-move %1_%3.log* ..\sbst-results\%1_%4_%3\
+move %1_%4_%3.log* ..\sbst-results\%1_%4_%3\
 move simulations ..\sbst-results\%1_%4_%3\
 move experiments ..\sbst-results\%1_%4_%3\
 

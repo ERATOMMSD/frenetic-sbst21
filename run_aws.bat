@@ -18,7 +18,7 @@ python competition.py --map-size %4 --time-budget %1 --module-name src.generator
 timeout /t 10
 
 mkdir ..\sbst-results\%1_%4_%3\
-move %1_%3.log* ..\sbst-results\%1_%4_%3\
+move %1_%4_%3.log* ..\sbst-results\%1_%4_%3\
 move simulations ..\sbst-results\%1_%4_%3\
 move experiments ..\sbst-results\%1_%4_%3\
 
