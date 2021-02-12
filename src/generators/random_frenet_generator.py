@@ -11,7 +11,7 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
     """
 
     def __init__(self, time_budget=None, executor=None, map_size=None, kill_ancestors=1, strict_father=True,
-                 random_budget=0.2, crossover_candidates=20, crossover_frequency=0, fix_points=False):
+                 random_budget=3600, crossover_candidates=20, crossover_frequency=0):
         # Spending 20% of the time on random generation
         # Set this value to 1.0 to generate fully random results.
         self.random_gen_budget = random_budget
@@ -28,16 +28,19 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
         # Set crossover frequency to 0 for no crossover
         self.crossover_candidates = crossover_candidates
         self.crossover_frequency = crossover_frequency
-        # Fix numbrt of points policy
-        if fix_points:
+
+        # Fix number or fix distance policy
+        self.max_length = 30
+        self.min_step_size = 7
+        if map_size < 150:
             #Fix Points
-            self.number_of_points = 20
-            self.frenet_step = int(map_size/self.number_of_points)
+            self.number_of_points = 15
+            self.frenet_step = max(self.min_step_size, map_size // self.number_of_points)
         else:
             # Fix Distance
             # Number of generated kappa points depends on the size of the map + random variation
             self.frenet_step = 10
-            self.number_of_points = int(map_size / self.frenet_step)
+            self.number_of_points = min(map_size // self.frenet_step, self.max_length)
 
         super().__init__(time_budget=time_budget, executor=executor, map_size=map_size, strict_father=strict_father)
 
@@ -47,7 +50,7 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
         sleep(10)
 
     def generate_initial_population(self):
-        while self.executor.get_remaining_time() > self.time_budget * (1.0 - self.random_gen_budget):
+        while self.executor.get_remaining_time() > (self.time_budget - self.random_gen_budget):
             log.info("Random generation. Remaining time %s", self.executor.get_remaining_time())
             kappas = self.generate_random_test()
             self.execute_frenet_test(kappas, frenet_step=self.frenet_step)
@@ -58,7 +61,7 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
         self.recent_count = 0
         while self.executor.get_remaining_time() > 0:
             if 0.0 in set(self.df['visited']) or 1.0 in set(self.df['visited']):
-                # TODO: Not sure why visited initially has 1.0 even though it is always defined as True or False.
+                # TODO: The values are become float if there is a nan due to ERROR.
                 log.info('Converting visited column to boolean...')
                 self.df['visited'] = self.df['visited'].map(lambda x: True if x == 1.0 else False)
             parent = self.df[((self.df.outcome == 'PASS') | (self.df.outcome == 'FAIL')) & (~self.df.visited) & (self.df.min_oob_distance < self.min_oobd_threshold)].sort_values('min_oob_distance', ascending=True).head(1)
@@ -71,6 +74,7 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
                 kappas = self.generate_random_test()
                 self.execute_frenet_test(kappas, frenet_step=self.frenet_step)
             if 0 < self.crossover_frequency <= self.recent_count:
+                log.info('Entering crossover phase.')
                 self.crossover()
                 self.recent_count = 0
 
@@ -150,7 +154,6 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
                     kids_count += 1
                     self.execute_frenet_test(kappas, method=name, frenet_step=self.frenet_step, parent_info={}, extra_info={})
 
-
     @staticmethod
     def chromosome_crossover(him, her):
         """
@@ -173,8 +176,8 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
             her: list of kappas
             returns: Two lists of kappas
         """
-        son = him[int(len(him)/2):] + her[:int(len(her)/2)]
-        daughter = her[int(len(her)/2):] + him[:int(len(him)/2)]
+        son = him[len(him)//2:] + her[:len(her)//2]
+        daughter = her[len(her)//2:] + him[:len(him)//2]
         return [son, daughter]
 
     def perform_kappa_mutations(self, kappa_mutations, parent, parent_info, extra_info={}):
@@ -266,76 +269,8 @@ class CustomFrenetGenerator(BaseFrenetGenerator):
         return kappas
 
 
-class RandomFrenetGenerator(CustomFrenetGenerator):
+class Frenetic(CustomFrenetGenerator):
     def __init__(self, time_budget=None, executor=None, map_size=None):
         super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
-                         kill_ancestors=0, strict_father=False, random_budget=1.0)
-
-
-class Frenet20(CustomFrenetGenerator):
-    def __init__(self, time_budget=None, executor=None, map_size=None):
-        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
-                         kill_ancestors=0, strict_father=False, random_budget=0.2)
-
-
-class Frenet20Kill(CustomFrenetGenerator):
-    def __init__(self, time_budget=None, executor=None, map_size=None):
-        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
-                         kill_ancestors=1, strict_father=False, random_budget=0.2)
-
-
-class Frenet20KillStrict(CustomFrenetGenerator):
-    def __init__(self, time_budget=None, executor=None, map_size=None):
-        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
-                         kill_ancestors=1, strict_father=True, random_budget=0.2)
-
-
-class Frenet20Strict(CustomFrenetGenerator):
-    def __init__(self, time_budget=None, executor=None, map_size=None):
-        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
-                         kill_ancestors=0, strict_father=True, random_budget=0.2)
-
-
-class Frenet10(CustomFrenetGenerator):
-    def __init__(self, time_budget=None, executor=None, map_size=None):
-        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
-                         kill_ancestors=0, strict_father=False, random_budget=0.1)
-
-
-class Frenet10Kill(CustomFrenetGenerator):
-    def __init__(self, time_budget=None, executor=None, map_size=None):
-        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
-                         kill_ancestors=1, strict_father=False, random_budget=0.1)
-
-
-class Frenet10KillStrict(CustomFrenetGenerator):
-    def __init__(self, time_budget=None, executor=None, map_size=None):
-        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
-                         kill_ancestors=1, strict_father=True, random_budget=0.1)
-
-
-class Frenet10Strict(CustomFrenetGenerator):
-    def __init__(self, time_budget=None, executor=None, map_size=None):
-        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
-                         kill_ancestors=0, strict_father=True, random_budget=0.1)
-
-
-class Frenet10StrictCross20F40(CustomFrenetGenerator):
-    def __init__(self, time_budget=None, executor=None, map_size=None):
-        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
-                         kill_ancestors=0, strict_father=True, random_budget=0.1,
+                         kill_ancestors=0, strict_father=False, random_budget=3600,
                          crossover_candidates=20, crossover_frequency=40)
-
-
-class Frenet10Cross20F40(CustomFrenetGenerator):
-    def __init__(self, time_budget=None, executor=None, map_size=None):
-        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
-                         kill_ancestors=0, strict_father=False, random_budget=0.1,
-                         crossover_candidates=20, crossover_frequency=40)
-
-
-class Frenet10FixPoints(CustomFrenetGenerator):
-    def __init__(self, time_budget=None, executor=None, map_size=None):
-        super().__init__(time_budget=time_budget, executor=executor, map_size=map_size,
-                         kill_ancestors=0, strict_father=False, random_budget=0.1, fix_points=True)
-
