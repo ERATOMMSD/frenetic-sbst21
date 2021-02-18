@@ -1,19 +1,8 @@
-# Cyber-Physical Systems Testing Competition (ERATO-fork)
+# Cyber-Physical Systems Testing Competition (ERATO-Fork)
 
 ## ERATO-Team SBST 2021 AV Competition
 
-This is a fork of [sbst-tool-competition-av](https://github.com/se2p/tool-competition-av) to develop our algorithms.
-
-The fork was done following this [instructions](https://stackoverflow.com/questions/10065526/github-how-to-make-a-fork-of-public-repository-private). Let's use the branch 'erato-mmsd' for dev and keep the branch 'main' clean to reduce conflicts when pulling updates from the original repository.
-
-To bring changes from the original repository follow this steps:
-```
-cd sbst-tool-competition-av
-git remote add public https://github.com/se2p/tool-competition-av.git
-git pull public main # Creates a merge commit
-git push origin main
-```
-
+This is a fork of [sbst-tool-competition-av](https://github.com/se2p/tool-competition-av) to develop our algorithms, which are inside folder src.
 
 ## Cyber-Physical Systems Testing Competition ##
 
