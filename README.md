@@ -1,4 +1,4 @@
-# Cyber-Physical Systems Testing Competition (ERATO-Fork)
+# Cyber-Physical Systems Testing Competition (Frenetic)
 
 ## ERATO-Team SBST 2021 AV Competition
 
