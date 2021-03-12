@@ -1,6 +1,6 @@
-# Cyber-Physical Systems Testing Competition (Frenetic)
+# Frenetic at Cyber-Physical Systems Testing Competition 
 
-## ERATO-Team SBST 2021 AV Competition
+## ERATO-Team SBST 2021 CPS Competition
 
 This is a fork of [sbst-tool-competition-av](https://github.com/se2p/tool-competition-av) to develop our algorithms, which are inside folder src.
 
