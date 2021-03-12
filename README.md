@@ -4,7 +4,7 @@
 
 This is a fork of [sbst-tool-competition-av](https://github.com/se2p/tool-competition-av) to develop our algorithms, which are inside folder src.
 
-You can also find a [preprint]{https://github.com/ERATOMMSD/frenetic-sbst21/blob/main/src/frenetic-sbst21-preprint.pdf} explaining our approach in the same folder.
+You can also find a [preprint](https://github.com/ERATOMMSD/frenetic-sbst21/blob/main/src/frenetic-sbst21-preprint.pdf) explaining our approach in the same folder.
 
 ## Cyber-Physical Systems Testing Competition ##
 
