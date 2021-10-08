@@ -9,7 +9,7 @@ MarkupSafe==1.1.1
 matplotlib==3.0.3
 msgpack==1.0.0
 numpy==1.19.3
-Pillow==8.0.1
+Pillow==8.3.2
 PyOpenGL==3.1.5
 PyOpenGL-accelerate==3.1.5
 pyparsing==2.4.7
